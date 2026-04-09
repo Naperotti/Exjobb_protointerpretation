@@ -1,62 +1,87 @@
-[
-  {
-    "prompt_id": "test_1",
-    "category": "general",
-    "prompt_text": "The meaning of life is",
-    "generated_text": "The meaning of life is that one has to put it in perspective. And that is what we've been thinking about in terms of the science of death. And so I think it comes down to a question: What happens when one ceases to think about the question, rather than the question itself?\n\nIt's very clear what the scientific method does, and what I believe, is a very powerful way to answer that question and that question can be found in the new age movement. You read about",
-    "model": "gpt2",
-    "max_length": 100,
-    "temperature": 1.0,
+{
+  "settings": {
+    "model": "Qwen/Qwen3-1.7B",
+    "max_length": 30,
+    "temperature": 0.7,
     "top_k": 50,
     "top_p": 0.95,
-    "sequence_index": 0
+    "num_return": 2
   },
-  {
-    "prompt_id": "test_2",
-    "category": "general",
-    "prompt_text": "In the beginning there was",
-    "generated_text": "In the beginning there was one, and she knew of two. There was no one but hers, but she had them, and we were both like brothers, we got along well together, and her mother was always good in general. She gave no attention to the children but did care for them and liked the way they behaved, and if they were well treated they would take home a good one. I never heard of any more children in the town, but they made it a habit for me to",
-    "model": "gpt2",
-    "max_length": 100,
-    "temperature": 1.0,
-    "top_k": 50,
-    "top_p": 0.95,
-    "sequence_index": 0
-  },
-  {
-    "prompt_id": "test_3",
-    "category": "science",
-    "prompt_text": "The theory of relativity states that",
-    "generated_text": "The theory of relativity states that one object's velocity is proportional to the energy it has. This means that when the object moves around the center of the observable universe the energy in the energy transfer field of the object moves in an exponential amount until it reaches its peak velocity and becomes energy dense (i.e., the energy is not transferred to the energy mass of the object). For the purpose of this paper we assume that the kinetic energy (i.e., the momentum in a moving object) and",
-    "model": "gpt2",
-    "max_length": 100,
-    "temperature": 1.0,
-    "top_k": 50,
-    "top_p": 0.95,
-    "sequence_index": 0
-  },
-  {
-    "prompt_id": "test_4",
-    "category": "science",
-    "prompt_text": "Photosynthesis is a process where",
-    "generated_text": "Photosynthesis is a process where carbon dioxide and other greenhouse gases are combined to form nitrous oxide and ammonia. In some cases, these molecules act as a catalyst. The nitrogen-free, but alkaline water of the planet is released into the atmosphere.\n\n\"The oceans are highly acidic because there is a lot of carbon dioxide which is needed to survive as the water cools on its own,\" explains Osterman. \"If the ocean was acidic, there would have been a lot of",
-    "model": "gpt2",
-    "max_length": 100,
-    "temperature": 1.0,
-    "top_k": 50,
-    "top_p": 0.95,
-    "sequence_index": 0
-  },
-  {
-    "prompt_id": "test_5",
-    "category": "story",
-    "prompt_text": "Once upon a time in a distant land",
-    "generated_text": "Once upon a time in a distant land I had heard the names of three of the ancient kings: the Emperor Claudius Claudius and Augustus Claudius; and on that day one of my servants, I know not, I did not see. I had seen nothing, for I knew not the name of any of the King's Lords who appeared to me, but the name of the eldest son of my father, the former Julius Caesar, the former Aventine and Viscount Aventine",
-    "model": "gpt2",
-    "max_length": 100,
-    "temperature": 1.0,
-    "top_k": 50,
-    "top_p": 0.95,
-    "sequence_index": 0
-  }
-]
+  "prompts": [
+    {
+      "settings": {
+        "model": "Qwen/Qwen3-1.7B",
+        "max_length": 30,
+        "temperature": 0.7,
+        "top_k": 50,
+        "top_p": 0.95,
+        "num_return": 2
+      },
+      "prompt": "The meaning of life is",
+      "sequences": {
+        "1": "The meaning of life is not only the things that we do with our lives, but also the things we do with others. (1995",
+        "2": "The meaning of life is a question that has been asked for millennia. The search for meaning is a universal human experience, and it is one that many"
+      }
+    },
+    {
+      "settings": {
+        "model": "Qwen/Qwen3-1.7B",
+        "max_length": 30,
+        "temperature": 0.7,
+        "top_k": 50,
+        "top_p": 0.95,
+        "num_return": 2
+      },
+      "prompt": "In the beginning there was",
+      "sequences": {
+        "1": "In the beginning there was a single cell. Then, the cell divided into two, and then each of those two divided into two, and so on",
+        "2": "In the beginning there was nothing, and then there was some... but that's not the end. The beginning is the place where all the beginnings and"
+      }
+    },
+    {
+      "settings": {
+        "model": "Qwen/Qwen3-1.7B",
+        "max_length": 30,
+        "temperature": 0.7,
+        "top_k": 50,
+        "top_p": 0.95,
+        "num_return": 2
+      },
+      "prompt": "The theory of relativity states that",
+      "sequences": {
+        "1": "The theory of relativity states that the speed of light is constant in all frames of reference. The problem is that when I try to apply this to",
+        "2": "The theory of relativity states that the speed of light in a vacuum is a constant, and in the case of electromagnetic radiation, it is the only"
+      }
+    },
+    {
+      "settings": {
+        "model": "Qwen/Qwen3-1.7B",
+        "max_length": 30,
+        "temperature": 0.7,
+        "top_k": 50,
+        "top_p": 0.95,
+        "num_return": 2
+      },
+      "prompt": "Photosynthesis is a process where",
+      "sequences": {
+        "1": "Photosynthesis is a process where the plants convert solar energy into chemical energy, using carbon dioxide and water as the raw materials. This process is essential for",
+        "2": "Photosynthesis is a process where plants and some other organisms use light energy to convert carbon dioxide and water into oxygen and glucose. The overall equation for photos"
+      }
+    },
+    {
+      "settings": {
+        "model": "Qwen/Qwen3-1.7B",
+        "max_length": 30,
+        "temperature": 0.7,
+        "top_k": 50,
+        "top_p": 0.95,
+        "num_return": 2
+      },
+      "prompt": "Once upon a time in a distant land",
+      "sequences": {
+        "1": "Once upon a time in a distant land, there lived a kind and curious young girl named Elara who discovered a magical book filled with ancient stories.",
+        "2": "Once upon a time in a distant land, there was a mystical forest called the Whispering Woods, known for its ancient trees and the legends that surrounded"
+      }
+    }
+  ]
+}

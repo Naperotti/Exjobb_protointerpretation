@@ -70,12 +70,18 @@ def save_embeddings(embeddings, metadata, output_dir):
 
 
 if __name__ == "__main__":
-    sequences = load_sequences(EMBEDDING_INPUT_PATH)
-    texts = [s["generated_text"] for s in sequences]
-    metadata = [{"prompt_id": s["prompt_id"], "category": s["category"], "prompt_text": s["prompt_text"]} for s in sequences]
+    data = load_sequences(EMBEDDING_INPUT_PATH)
+    sequences = data["prompts"]
+    texts = []
+    metadata = []
+    for prompt_group in sequences:
+        prompt_text = prompt_group["prompt"]
+        for sequence_index, generated_text in prompt_group["sequences"].items():
+            texts.append(generated_text)
+            metadata.append({"prompt_text": prompt_text, "sequence_index": int(sequence_index)})
 
     if EMBEDDING_MODE == "hidden":
-        model_name = EMBEDDING_MODEL_NAME or sequences[0]["model"]
+        model_name = EMBEDDING_MODEL_NAME or data["settings"]["model"]
         embeddings = extract_hidden_states(texts, model_name, layer=EMBEDDING_LAYER)
     else:
         model_name = EMBEDDING_MODEL_NAME or "sentence-transformers/all-MiniLM-L6-v2"

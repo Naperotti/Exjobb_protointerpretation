@@ -3,7 +3,7 @@ from pathlib import Path
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from prompts import PROMPTS
 import torch
-from settings import MODEL_NAME, MAX_LENGTH, TEMPERATURE, TOP_K, TOP_P, NUM_RETURN, GENERATED_OUTPUT_PATH
+from settings import SETTINGS_NAME, PROMPT_ID, MODEL_NAME, MAX_LENGTH, TEMPERATURE, TOP_K, TOP_P, NUM_RETURN, GENERATED_OUTPUT_PATH
 
 
 def generate_sequences(model_name, prompts, max_length, temperature, top_k, top_p, num_return):
@@ -28,37 +28,48 @@ def generate_sequences(model_name, prompts, max_length, temperature, top_k, top_
                 do_sample=True,
                 pad_token_id=tokenizer.pad_token_id,
             )
+        prompt_result = {
+            "prompt": prompt["text"],
+            "sequences": {},
+        }
         for i, output in enumerate(outputs):
             text = tokenizer.decode(output, skip_special_tokens=True)
-            results.append({
-                "prompt_id": prompt["id"],
-                "category": prompt["category"],
-                "prompt_text": prompt["text"],
-                "generated_text": text,
-                "model": model_name,
-                "max_length": max_length,
-                "temperature": temperature,
-                "top_k": top_k,
-                "top_p": top_p,
-                "sequence_index": i,
-            })
+            prompt_result["sequences"][str(i + 1)] = text
+        results.append(prompt_result)
         print(f"Generated {num_return} sequence(s) for prompt '{prompt['id']}'")
 
     return results
 
 
 def save_results(results, output_path):
+    output_data = {
+        "settings": {
+            "settings_name": SETTINGS_NAME,
+            "prompt_id": PROMPT_ID,
+            "model": MODEL_NAME,
+            "max_length": MAX_LENGTH,
+            "temperature": TEMPERATURE,
+            "top_k": TOP_K,
+            "top_p": TOP_P,
+            "num_return": NUM_RETURN,
+        },
+        "prompts": results,
+    }
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(results, f, indent=2, ensure_ascii=False)
-    print(f"Saved {len(results)} sequences to {output_path}")
+        json.dump(output_data, f, indent=2, ensure_ascii=False)
+    print(f"Saved {len(results)} prompt groups to {output_path}")
 
 
 if __name__ == "__main__":
+    selected_prompt = next((p for p in PROMPTS if p["id"] == PROMPT_ID), None)
+    if selected_prompt is None:
+        raise ValueError(f"Prompt id '{PROMPT_ID}' not found in prompts.py")
+
     results = generate_sequences(
         model_name=MODEL_NAME,
-        prompts=PROMPTS,
+        prompts=[selected_prompt],
         max_length=MAX_LENGTH,
         temperature=TEMPERATURE,
         top_k=TOP_K,

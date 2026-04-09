@@ -1,0 +1,21 @@
+{
+  "settings": {
+    "settings_name": "qwen_test_1",
+    "prompt_id": "test_1",
+    "model": "Qwen/Qwen3-1.7B",
+    "max_length": 30,
+    "temperature": 0.7,
+    "top_k": 50,
+    "top_p": 0.95,
+    "num_return": 2
+  },
+  "prompts": [
+    {
+      "prompt": "The meaning of life is",
+      "sequences": {
+        "1": "The meaning of life is a question that has puzzled humanity for centuries, but in recent years, the concept of purpose has taken on new dimensions with the",
+        "2": "The meaning of life is the most difficult question of all, and its answer can be found in the most difficult of all things: the science of the"
+      }
+    }
+  ]
+}

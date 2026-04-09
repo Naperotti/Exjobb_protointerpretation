@@ -1,11 +1,14 @@
+SETTINGS_NAME = "qwen_test_1"
+PROMPT_ID = "test_1"
+
 MODEL_NAME = "Qwen/Qwen3-1.7B"
 #models = ["gpt2", "Qwen/Qwen3-1.7B"]
 MAX_LENGTH = 30
 TEMPERATURE = 0.7
 TOP_K = 50
 TOP_P = 0.95
-NUM_RETURN = 2
-GENERATED_OUTPUT_PATH = "data/generated_sequences.json"
+NUM_RETURN = 10
+GENERATED_OUTPUT_PATH = f"data/{SETTINGS_NAME}.json"
 
 EMBEDDING_INPUT_PATH = GENERATED_OUTPUT_PATH
 EMBEDDING_MODE = "hidden"  # "hidden" or "sentence"
