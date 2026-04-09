@@ -1,9 +1,15 @@
 import json
-import argparse
 import numpy as np
 from pathlib import Path
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoModel
 import torch
+from settings import (
+    EMBEDDING_INPUT_PATH,
+    EMBEDDING_MODE,
+    EMBEDDING_MODEL_NAME,
+    EMBEDDING_LAYER,
+    EMBEDDING_OUTPUT_DIR,
+)
 
 
 def load_sequences(input_path):
@@ -64,23 +70,15 @@ def save_embeddings(embeddings, metadata, output_dir):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--input", default="data/generated_sequences.json")
-    parser.add_argument("--mode", choices=["hidden", "sentence"], default="hidden")
-    parser.add_argument("--model", default=None, help="Model name. Defaults to generating model (hidden) or all-MiniLM-L6-v2 (sentence)")
-    parser.add_argument("--layer", type=int, default=-1, help="Which hidden layer to use (hidden mode only)")
-    parser.add_argument("--output_dir", default="embeddings")
-    args = parser.parse_args()
-
-    sequences = load_sequences(args.input)
+    sequences = load_sequences(EMBEDDING_INPUT_PATH)
     texts = [s["generated_text"] for s in sequences]
     metadata = [{"prompt_id": s["prompt_id"], "category": s["category"], "prompt_text": s["prompt_text"]} for s in sequences]
 
-    if args.mode == "hidden":
-        model_name = args.model or sequences[0]["model"]
-        embeddings = extract_hidden_states(texts, model_name, layer=args.layer)
+    if EMBEDDING_MODE == "hidden":
+        model_name = EMBEDDING_MODEL_NAME or sequences[0]["model"]
+        embeddings = extract_hidden_states(texts, model_name, layer=EMBEDDING_LAYER)
     else:
-        model_name = args.model or "sentence-transformers/all-MiniLM-L6-v2"
+        model_name = EMBEDDING_MODEL_NAME or "sentence-transformers/all-MiniLM-L6-v2"
         embeddings = extract_sentence_transformer(texts, model_name)
 
-    save_embeddings(embeddings, metadata, args.output_dir)
+    save_embeddings(embeddings, metadata, EMBEDDING_OUTPUT_DIR)

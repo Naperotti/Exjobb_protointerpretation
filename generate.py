@@ -1,12 +1,12 @@
 import json
-import argparse
 from pathlib import Path
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from prompts import PROMPTS
 import torch
+from settings import MODEL_NAME, MAX_LENGTH, TEMPERATURE, TOP_K, TOP_P, NUM_RETURN, GENERATED_OUTPUT_PATH
 
 
-def generate_sequences(model_name, prompts, max_length=100, temperature=0.7, top_k=50, top_p=0.95, num_return=1):
+def generate_sequences(model_name, prompts, max_length, temperature, top_k, top_p, num_return):
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(model_name)
     model.eval()
@@ -23,11 +23,11 @@ def generate_sequences(model_name, prompts, max_length=100, temperature=0.7, top
                 max_length=max_length,
                 temperature=temperature,
                 top_k=top_k,
-            top_p=top_p,
-            num_return_sequences=num_return,
-            do_sample=True,
-            pad_token_id=tokenizer.pad_token_id,
-        )
+                top_p=top_p,
+                num_return_sequences=num_return,
+                do_sample=True,
+                pad_token_id=tokenizer.pad_token_id,
+            )
         for i, output in enumerate(outputs):
             text = tokenizer.decode(output, skip_special_tokens=True)
             results.append({
@@ -56,23 +56,13 @@ def save_results(results, output_path):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--model", default="gpt2")
-    parser.add_argument("--max_length", type=int, default=100)
-    parser.add_argument("--temperature", type=float, default=1.0)
-    parser.add_argument("--top_k", type=int, default=50)
-    parser.add_argument("--top_p", type=float, default=0.95)
-    parser.add_argument("--num_return", type=int, default=1)
-    parser.add_argument("--output", default="data/generated_sequences.json")
-    args = parser.parse_args()
-
     results = generate_sequences(
-        model_name=args.model,
+        model_name=MODEL_NAME,
         prompts=PROMPTS,
-        max_length=args.max_length,
-        temperature=args.temperature,
-        top_k=args.top_k,
-        top_p=args.top_p,
-        num_return=args.num_return,
+        max_length=MAX_LENGTH,
+        temperature=TEMPERATURE,
+        top_k=TOP_K,
+        top_p=TOP_P,
+        num_return=NUM_RETURN,
     )
-    save_results(results, args.output)
+    save_results(results, GENERATED_OUTPUT_PATH)

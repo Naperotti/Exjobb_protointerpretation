@@ -15,3 +15,13 @@
 
 ## Communication
 - Before running any terminal command or action that requires user approval, explain what the command does and why
+
+## User Workflow Preferences
+- Keep solutions minimal and practical
+- Prefer one clear settings file for configurable values
+- Avoid duplicate configuration values across files
+- If a setting exists in `settings.py`, do not redefine the same default elsewhere
+- Give exact step-by-step commands when user asks how to do something
+- Prefer direct fixes over long theoretical explanations
+- When explaining code, focus on what each part does in plain language
+- Do not introduce extra project structure unless explicitly requested
