@@ -3,9 +3,10 @@ import argparse
 from pathlib import Path
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from prompts import PROMPTS
+import torch
 
 
-def generate_sequences(model_name, prompts, max_length=100, temperature=1.0, top_k=50, top_p=0.95, num_return=1):
+def generate_sequences(model_name, prompts, max_length=100, temperature=0.7, top_k=50, top_p=0.95, num_return=1):
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(model_name)
     model.eval()
@@ -16,11 +17,12 @@ def generate_sequences(model_name, prompts, max_length=100, temperature=1.0, top
     results = []
     for prompt in prompts:
         inputs = tokenizer(prompt["text"], return_tensors="pt")
-        outputs = model.generate(
-            **inputs,
-            max_length=max_length,
-            temperature=temperature,
-            top_k=top_k,
+        with torch.no_grad():
+            outputs = model.generate(
+                **inputs,
+                max_length=max_length,
+                temperature=temperature,
+                top_k=top_k,
             top_p=top_p,
             num_return_sequences=num_return,
             do_sample=True,

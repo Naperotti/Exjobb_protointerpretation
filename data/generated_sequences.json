@@ -1,0 +1,62 @@
+[
+  {
+    "prompt_id": "test_1",
+    "category": "general",
+    "prompt_text": "The meaning of life is",
+    "generated_text": "The meaning of life is so much more interesting for people who have children.\n\n\"My family was quite strict and not very welcoming to anybody who was doing anything wrong,\" she says.\n\n\"In the end I got my second child in February 2012 and I still love them so much – I love them so much, and they are a constant reminder I am blessed.\n\n\"I am an open minded person, there is nothing inherently wrong with that – we have lots of opportunities and",
+    "model": "gpt2",
+    "max_length": 100,
+    "temperature": 1.0,
+    "top_k": 50,
+    "top_p": 0.95,
+    "sequence_index": 0
+  },
+  {
+    "prompt_id": "test_2",
+    "category": "general",
+    "prompt_text": "In the beginning there was",
+    "generated_text": "In the beginning there was a lot that was being said and it would come and go and change very quickly. The word has changed over time, but it is still what I do and I keep doing it very, very passionately. It has got to be about people.\n\nWhat makes you feel in your heart to say to people, \"We want to work with you\"?\n\nFor me personally I am not one of those who feels this way and just feels like there is no way to",
+    "model": "gpt2",
+    "max_length": 100,
+    "temperature": 1.0,
+    "top_k": 50,
+    "top_p": 0.95,
+    "sequence_index": 0
+  },
+  {
+    "prompt_id": "test_3",
+    "category": "science",
+    "prompt_text": "The theory of relativity states that",
+    "generated_text": "The theory of relativity states that gravity is neither stationary nor non-locally revolving in space, in the form of a \"space of space.\" It has two properties, a stable gravitational field and a curved spacetime. The \"space\" in this theory is also the space, in which matter appears and disappears in the form of a spherical particle (the \"body of matter\"). The concept of space was developed in the 16th century by Einstein and developed the first particle-wave theory which developed a",
+    "model": "gpt2",
+    "max_length": 100,
+    "temperature": 1.0,
+    "top_k": 50,
+    "top_p": 0.95,
+    "sequence_index": 0
+  },
+  {
+    "prompt_id": "test_4",
+    "category": "science",
+    "prompt_text": "Photosynthesis is a process where",
+    "generated_text": "Photosynthesis is a process where carbon (CO) is created at the base of the leaf (called an \"hydrogen\" or \"iron\" or \"iron oxide\"). The atoms of the water/water-ice/ice-ice-ice are called carbon atoms (the \"carbon atoms\" are called by the scientists. This is why they're called carbonates). So, in order to make the water ice, one needs to use carbon dioxide, but most of the time, CO gets trapped",
+    "model": "gpt2",
+    "max_length": 100,
+    "temperature": 1.0,
+    "top_k": 50,
+    "top_p": 0.95,
+    "sequence_index": 0
+  },
+  {
+    "prompt_id": "test_5",
+    "category": "story",
+    "prompt_text": "Once upon a time in a distant land",
+    "generated_text": "Once upon a time in a distant land, a great sea appeared, and as it rose up, some of the waters were thrown up in all directions, and the seas were opened and some of the fishes and fishes of the sea were thrown away. A great and mighty man came out of the sea and gave forth his sword, and with it they slew the King. And the King lay not a man by the land of the King: he was slain by the sea-changers, and with",
+    "model": "gpt2",
+    "max_length": 100,
+    "temperature": 1.0,
+    "top_k": 50,
+    "top_p": 0.95,
+    "sequence_index": 0
+  }
+]
