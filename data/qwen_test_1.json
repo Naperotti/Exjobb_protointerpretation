@@ -7,14 +7,17 @@
     "temperature": 0.7,
     "top_k": 50,
     "top_p": 0.95,
-    "num_return": 2
+    "num_return": 5
   },
   "prompts": [
     {
       "prompt": "The meaning of life is",
       "sequences": {
-        "1": "The meaning of life is a question that has puzzled humanity for centuries, but in recent years, the concept of purpose has taken on new dimensions with the",
-        "2": "The meaning of life is the most difficult question of all, and its answer can be found in the most difficult of all things: the science of the"
+        "1": "The meaning of life is a fundamental question that has been explored by philosophers, scientists, and spiritual seekers across different cultures and eras. It is a",
+        "2": "The meaning of life is a question that has been asked by humanity for millennia. It has been explored in numerous ways, from philosophical inquiries to scientific theories",
+        "3": "The meaning of life is a question that has been pondered by philosophers, scientists, and thinkers for centuries. The search for meaning often leads to the",
+        "4": "The meaning of life is a big question. What is the purpose of life? How can I find my purpose? What is the meaning of life?",
+        "5": "The meaning of life is a profound and enduring question that has captivated human thought for centuries. From the philosophical musings of ancient thinkers to the scientific"
       }
     }
   ]
