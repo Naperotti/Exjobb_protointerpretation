@@ -1,0 +1,64 @@
+{
+  "settings": {
+    "settings_name": "all_prompts_test",
+    "prompt_id": "test_1",
+    "model": "Qwen/Qwen3-1.7B",
+    "max_length": 30,
+    "temperature": 0.7,
+    "top_k": 50,
+    "top_p": 0.95,
+    "num_return": 5
+  },
+  "prompts": [
+    {
+      "prompt": "The meaning of life is",
+      "sequences": {
+        "1": "The meaning of life is a question that has fascinated philosophers, scientists, and people from all walks of life for centuries. From the ancient Greek philosopher S",
+        "2": "The meaning of life is a topic that has fascinated philosophers, scientists, and thinkers for millennia. It asks us to ponder the fundamental question of why we",
+        "3": "The meaning of life is a question that has been debated for millennia, with various philosophical, scientific, and religious perspectives offering their own take. From a",
+        "4": "The meaning of life is a question that has intrigued philosophers, scientists, and everyday people alike for centuries. It is a question that has been explored in",
+        "5": "The meaning of life is the question that has haunted humanity for millennia, prompting countless philosophers, scientists, and spiritual leaders to seek answers. In the context"
+      }
+    },
+    {
+      "prompt": "In the beginning there was",
+      "sequences": {
+        "1": "In the beginning there was just one single 2016. Then it became two 2016s, and then the two ",
+        "2": "In the beginning there was a tree. Now, there are 4000 trees. How many trees were there before the first tree was added",
+        "3": "In the beginning there was a single cube with side length 1. Then, a cube of side length 1/2 was formed. Then,",
+        "4": "In the beginning there was a single point. This is a common phrase used to symbolize the beginning of the universe. But in reality, there was",
+        "5": "In the beginning there was a single apple. Then, the apple was picked. Then, the apple was eaten. Then, the apple was cut into"
+      }
+    },
+    {
+      "prompt": "The theory of relativity states that",
+      "sequences": {
+        "1": "The theory of relativity states that the speed of light is constant in all inertial frames of reference, and that the speed of an object is always",
+        "2": "The theory of relativity states that the mass of an object increases as its speed approaches the speed of light. However, in the context of special rel",
+        "3": "The theory of relativity states that the energy of a moving object is given by the equation $E = \\gamma mc^2$, where $\\gamma",
+        "4": "The theory of relativity states that the speed of light is the same for all observers in inertial frames of reference. So, if two observers in",
+        "5": "The theory of relativity states that the speed of light is a constant in all inertial frames of reference, regardless of the motion of the source or"
+      }
+    },
+    {
+      "prompt": "Photosynthesis is a process where",
+      "sequences": {
+        "1": "Photosynthesis is a process where plants and some other organisms use sunlight to convert carbon dioxide and water into oxygen and glucose. The glucose is used by the",
+        "2": "Photosynthesis is a process where plants, algae and some bacteria convert light energy into chemical energy. It is the main source of energy for nearly all life",
+        "3": "Photosynthesis is a process where plants convert light energy into chemical energy, and this is crucial for the survival of all life on Earth. The process involves",
+        "4": "Photosynthesis is a process where plants and some other organisms convert carbon dioxide and water into glucose and oxygen. This process is vital for life on Earth,",
+        "5": "Photosynthesis is a process where plants use sunlight, water, and carbon dioxide to produce glucose and oxygen. The overall equation for photosynthesis is 6"
+      }
+    },
+    {
+      "prompt": "Once upon a time in a distant land",
+      "sequences": {
+        "1": "Once upon a time in a distant land, there is a big city with a lot of houses. The city has 100 houses. The",
+        "2": "Once upon a time in a distant land, there was a magical tree that grew the most amazing fruit. The tree was known for its ability to produce",
+        "3": "Once upon a time in a distant land, there was a castle with a very large number of trees. The trees were in a single row, and",
+        "4": "Once upon a time in a distant land, there is a castle. The castle has a number of rooms, each of which is a different type of",
+        "5": "Once upon a time in a distant land, there was a kingdom called \"The Kingdom of Mists\". The kingdom was known for its magical forest,"
+      }
+    }
+  ]
+}

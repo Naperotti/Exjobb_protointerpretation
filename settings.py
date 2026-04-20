@@ -1,4 +1,4 @@
-SETTINGS_NAME = "qwen_test_1"
+SETTINGS_NAME = "all_prompts_test"
 PROMPT_ID = "test_1"
 
 MODEL_NAME = "Qwen/Qwen3-1.7B"

@@ -2,4 +2,6 @@ transformers
 torch
 numpy
 pandas
-torch
+umap-learn
+scikit-learn
+matplotlib

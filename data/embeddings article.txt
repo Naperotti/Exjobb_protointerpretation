@@ -1,0 +1,924 @@
+Abstract
+Sentence representations are foundational to many
+Natural Language Processing (NLP) applications.
+While recent methods leverage Large Language
+Models (LLMs) to derive sentence representa-
+tions, most rely on final-layer hidden states, which
+are optimized for next-token prediction and thus
+often fail to capture global, sentence-level seman-
+tics. This paper introduces a novel perspective,
+demonstrating that attention value vectors capture
+sentence semantics more effectively than hidden
+states. We propose Value Aggregation (VA), a
+simple method that pools token values across mul-
+tiple layers and token indices. In a training-free
+setting, VA outperforms other LLM-based embed-
+dings, even matches or surpasses the ensemble-
+based MetaEOL. Furthermore, we demonstrate
+that when paired with suitable prompts, the layer
+attention outputs can be interpreted as aligned
+weighted value vectors. Specifically, the atten-
+tion scores of the last token function as the
+weights, while the output projection matrix (WO )
+aligns these weighted value vectors with the com-
+mon space of the LLM residual stream. This
+refined method, termed Aligned Weighted VA
+(AlignedWVA), achieves state-of-the-art perfor-
+mance among training-free LLM-based embed-
+dings, outperforming the high-cost MetaEOL by
+a substantial margin. Finally, we highlight the
+potential of obtaining strong LLM embedding
+models through fine-tuning Value Aggregation.
+1. Introduction
+Text representation is fundamental to natural language pro-
+cessing, enabling tasks such as semantic similarity, retrieval,
+clustering, and anomaly detection (Muennighoff et al., 2023;
+Enevoldsen et al., 2025; Xiao et al., 2024; Thakur et al.,
+1State Key Laboratory for Novel Software Technology, Nan-
+jing University, China. Correspondence to: Cam-Tu Nguyen
+<ncamtu@nju.edu.cn>.
+Preprint. February 3, 2026.
+2021). By embedding text into high-dimensional vec-
+tor spaces, models can effectively capture semantic rela-
+tionships and enhance downstream applications such as
+Retrieval-Augmented Generation (Karpukhin et al., 2020;
+Gao et al., 2021; Reimers & Gurevych, 2019), among other
+higher-level tasks (Karpukhin et al., 2020; Gao et al., 2021;
+Reimers & Gurevych, 2019). Recent studies also exploit in-
+ternal text representations (embeddings) for model behavior
+interpretability, showing that attention sinks, compression
+valleys, and residual-stream representations influence em-
+bedding geometry and token-level predictions (Wang et al.,
+2023; Skean et al., 2025; Queipo-de-Llano et al., 2025;
+Wendler et al., 2024; Wu et al., 2025).
+Despite their strong generative capabilities, autoregressive
+large language models (LLMs) are not inherently optimized
+for producing high-quality representations. Trained with a
+next-token prediction objective, these models differ funda-
+mentally from representation learning approaches that focus
+on sequence-level semantics. Consequently, autoregressive
+LLMs often struggle on tasks requiring robust sentence-
+level embeddings (Muennighoff et al., 2025; BehnamGhader
+et al., 2024; Zhang et al., 2025; Su et al., 2025).
+To address these, existing work follows two main direc-
+tions. The first introduces additional pretraining objectives
+to adapt LLMs into embedding models, as in LLM2Vec
+(BehnamGhader et al., 2024), LLM2Comp (Zhang et al.,
+2025). However, these methods incur substantial training
+costs and often compromise the model’s generative capa-
+bilities. The second direction employs different inference-
+time strategies such as Explicit One-Word Limitation (EOL)
+prompting, which concentrates sentence information into
+the next token and improves representation quality without
+parameter updates (Lei et al., 2024; Cheng et al., 2025).
+This approach, however, still exhibits a performance gap
+compared to fully trained LLM-based embedding models.
+A key limitation of many existing approaches lies in their
+reliance on the last-layer hidden state as the sentence embed-
+ding. In this paper, we explore whether alternative internal
+features of LLMs, beyond hidden states, provide a stronger
+basis for representing sentence semantics. Addressing this
+question has important implications for both training-based
+and training-free approaches to LLM embeddings.
+1
+arXiv:2602.01572v1 [cs.CL] 2 Feb 2026
+LLM-based Embeddings
+Inspired by truth conditional semantics (Davidson, 1967),
+which defines two sentences as semantically similar when
+their truth values remain consistent across contexts, we
+propose that sentence meaning can be approximated by
+treating text continuation space as observable proxies for
+a sentence’s contextual space. We then empirically show
+that a sentence’s influence on its continuation is primarily
+determined by its value vectors.
+Building on this insight, we introduce Value Aggregation
+(VA), a straightforward approach that aggregates token value
+vectors across multiple layers and positions. In a training-
+free setting, VA consistently outperforms existing LLM-
+based embedding methods and even rivals or exceeds the
+ensemble-based MetaEOL on MTEB tasks across two base
+models (LLaMA-2 (7B) and Qwen-3 (8B)). Furthermore,
+we demonstrate that, with appropriate prompting, the atten-
+tion layer outputs can be interpreted as aligned weighted
+VA. Specifically, the last token’s attention scores act as
+weights, while the output projection matrix (WO ) maps the
+weighted values into the shared residual-stream space of
+the LLM. This enhanced method, termed Aligned Weighted
+Value Aggregation (AlignedWVA), achieves state-of-the-art
+performance among training-free LLM-based embeddings,
+surpassing the high-cost MetaEOL baseline by a substantial
+margin. It is noteworthy that AlignedWVA incurs signifi-
+cantly lower encoding cost, as it does not require passing
+each sentence through multiple prompts as in MetaEOL.
+Although fine-tuning is not the primary focus of this paper,
+we show that Finetune-VA achieves performance compara-
+ble to fine-tuning mean-pooled hidden states while requiring
+far fewer trainable parameters.
+This work makes the following key contributions:
+1. Theoretical insight: We establish that value vectors,
+rather than hidden states, more directly capture sen-
+tence semantics by encoding a sentence’s influence on
+its continuation under the truth-conditional framework.
+2. Methodology: We propose Value Aggregation (VA),
+a simple and training-free method that aggregates
+value vectors across layers and tokens to produce high-
+quality sentence embeddings. We further extend VA
+to Aligned Weighted Value Aggregation (AlignedWVA),
+which aligns weighted VA with the residual stream
+space, achieving state-of-the-art performance among
+training-free LLM embeddings. Note that Aligned-
+WVA offers substantial computational advantages over
+ensemble-based methods such as MetaEOL,
+3. Fine-tuning: We preliminarily demonstrate the poten-
+tial of developing LLM embedding models through
+fine-tuning VA. Additionally, Finetune-VA, when ap-
+plied only to the attention layers, achieves performance
+comparable to fine-tuned HS baselines while requiring
+substantially fewer trainable parameters.
+2. Preliminaries
+Given a standard decoder-only Transformer with pre-layer
+normalization (pre-LN) as in Figure 1, each layer takes the
+output of the previous layer, performs calculations (Self-
+Attention and Feed-Forward), and produces a new vector.
+This vector is the hidden state. Given an input sequence
+of N tokens, the hidden state xl
+n ∈ Rd represents the rep-
+resentation of token n at layer l, where l ∈ {0, 1, ..., L}.
+The initial hidden state x0
+n is derived from the sum of token
+and positional embeddings. The model processes the input
+through L + 1 transformer layers (from 0th to Lth layer).
+Multi-head self-attention (MHA). At layer l, the MHA
+operation comprises H attention heads, each with head
+dimension dh = d/H. For head h ∈ {1, ..., H}, the query,
+key, and value vectors for token n are obtained via linear
+projections of the layer-normalized hidden states:
+ql,h
+n = LN(xl−1
+n )Wl,h
+Q ,
+kl,h
+n = LN(xl−1
+n )Wl,h
+K ,
+vl,h
+n = LN(xl−1
+n )Wl,h
+V ,
+where Wl,h
+Q , Wl,h
+K , Wl,h
+V ∈ Rd×dh are learnable projection
+matrices. The attention weight that token n assigns to token
+j in head h is computed as:
+αl,h
+n,j = exp((ql,h
+n )⊤kl,h
+j /√dh)
+PN
+k=1 exp((ql,h
+n )⊤kl,h
+k /√dh) .
+The head attention output for the head h and token n is the
+weighted sum of value vectors:
+zl,h
+n =
+NX
+j=1
+αl,h
+n,j vl,h
+j ∈ Rdh . (1)
+The head outputs are concatenated and projected by Wl
+O ∈
+Rd×d to produce the layer attention output of token n:
+zl
+n = Concat zl,1
+n , . . . , zl,H
+n
+ (2)
+al
+n = MHAl(LN(xl−1
+n )) = zl
+nWl
+O (3)
+Feed-forward network (FFN). The FFN sublayer at layer
+l processes the attention output through two linear transfor-
+mations with a non-linear activation:
+f l
+n = FFNl(LN(xl−1
+n + al
+n))
+= GeLU((LN(xl−1
+n + al
+n))Wl
+1)Wl
+2.
+where Wl
+1 ∈ Rd×dff and Wl
+2 ∈ Rdff×d are the weight
+matrices, with dff typically set to 4d.
+2
+LLM-based EmbeddingsEmbedding
+Layer
+...
+Unembedding
+Layer
+Input Token
+Index Output Token
+Logit
+N Layers
+Figure 1. The value aggregation architecture, which involves pooling the token-level value representations across all layers.
+Residual stream. In decoder-only Transformer models,
+information flows through residual connections. Each to-
+ken’s HS at layer l is computed by adding the outputs of
+attention and FFN sublayers to the previous layer’s HS:
+xl
+n = xl−1
+n + al
+n + f l
+n,
+where al
+n and f l
+n are the outputs of the attention and FFN
+sublayers respectively.
+For LLM-based embeddings, existing methods primarily
+pool over hidden states xl
+n, with several variants: (1) LT
+uses the hidden state of the last token from the last layer; (2)
+WMP applies weighted mean pooling over the hidden states
+of the last layer; (3) HS (Full) averages hidden states across
+all layers, while HS (Half) averages over the latter half; and
+(4) HS aggregates over a subset of layers chosen based on
+validation performance. Detailed notations are provided in
+Appendix 3. Alternatively, we propose Value Aggregation
+(VA), which aggregates value vectors vl,h
+n across layers and
+tokens (see Section 4 for details).
+3. Motivation
+This section shows that HS better aligns with next-token em-
+beddings, while VA is better at capturing sentence semantics
+within the truth-conditional framework.
+3.1. Hidden States Align Next Tokens Embedding
+In LLMs, the final hidden state at position t−1, xL
+t−1, is
+directly optimized to predict the next token xt. This training
+objective encourages xL
+t−1 to encode features that discrimi-
+nate the correct next token from other vocabulary candidates,
+rather than features that capture the overall meaning of the
+entire prefix. Consider two prefixes that share the same local
+suffix and therefore yield a similar next-token distribution:
+s1 : “After months of negotiations, the merger was
+approved, and the CEO said the deal was done.”
+s2 : “After months of recovery, the patient was stable,
+and the surgeon said the procedure was done.”
+Immediately before the final token done, both prefixes
+strongly constrain the set of plausible continuations (e.g.,
+done, complete, successful). Because xL
+t−1 is trained to
+assign high probability to the correct continuation, the repre-
+sentations xL
+t−1(s1) and xL
+t−1(s2) may become close in the
+representation space, even though the overall sentence se-
+mantics differ substantially. This can collapse semantically
+distinct sentences that share similar local continuations, and
+is therefore not guaranteed to align with sentence similarity.
+In Appendix D, we show that autoregressive pretraining can
+be interpreted through the lens of contrastive learning: it
+pulls the context representation toward the unembedding
+vector of the observed next token while pushing it away
+from those of other tokens.
+3.2. Value Aggregation Encode Sentence Semantics
+Truth-Conditional View of Sentence Similarity. Truth-
+conditional semantics defines the meaning of a sentence
+through the conditions under which it is true in a given con-
+text (Davidson, 1967). This framework provides a formal
+basis for comparing sentence similarity. Building on this
+concept, we introduce graded truth assessments, where each
+context is assigned a probability weight representing the
+likelihood that the sentence is true in that context. This
+approach provides a more nuanced understanding of sen-
+tence meaning, with different contexts supporting varying
+degrees of truth. Since the set of possible contexts is unob-
+servable, we use sentence continuations as a proxy for truth
+conditions, assuming that the probability distribution over
+continuations approximates the likelihood of the correspond-
+ing truth conditions. This assumption links continuation
+probabilities to truth conditions and forms a probabilistic
+framework for sentence-level semantics. Further details are
+provided in Appendix B.
+Hypothesis 3.1 (Value Aggregation as a Better Proxy for
+Sentence Semantics). If the continuation distribution serves
+as a proxy for truth conditions, then embeddings that more
+accurately represent this distribution yield better sentence
+representations. In particular, we hypothesize that value ag-
+3
+LLM-based Embeddings
+Figure 2. Layer-wise segment matching on LongBench v2. We split each long sequence into a prefix and suffix segment (split point
+sampled between 1/4 and 3/4 of the token length), and retrieve the matching suffix segment for each prefix segment using embeddings
+from each layer. Each panel reports recall@k (left: k=1, middle: k=5, right: k=10). VA (of l-layer) improves steadily with depth and
+outperforms HS (of l-layer) in deeper layers across all k, while the hidden state is competitive only in very early layers.
+gregation captures continuation distributions more faithfully
+than hidden-state embeddings. Representations based on
+value aggregation outperform those based on hidden states
+in modeling the continuation distribution.
+Empirical Verification. We test Hypothesis 3.1 using a
+segment-matching retrieval task. From a long text, we sam-
+ple a split point uniformly from the middle half of the token
+positions (between 1/4 and 3/4 of the length), producing
+a prefix segment and a suffix segment. For each layer, we
+compute embeddings for all prefix segments and all suffix
+segments, form a similarity matrix, and evaluate recall@k
+where the correct match for prefix segment i is suffix seg-
+ment i. We use LongBench v2 because it contains long
+sequences, ensuring both segments contain enough tokens
+to carry meaningful content.
+Figure 2 presents the layer-wise recall@1/5/10 results for
+VA and HS. Here, “layer-wise” means that HS (or VA) is
+obtained by mean-pooling token representations within each
+layer for comparison. VA performance increases monotoni-
+cally with depth and consistently surpasses HS in the deeper
+layers across all three metrics. In contrast, HS achieves
+higher scores only in the earliest layers but declines rapidly
+and recovers only partially in later layers. These findings
+support Hypothesis 3.1, indicating that VA provides a more
+reliable signal for matching longer continuations than HS.
+4. Value Aggregation for Text Embeddings
+This section first provides a formal description of Value
+Aggregation (VA), followed by a detailed explanation of the
+layer selection process for pooling value vectors.
+4.1. Value Aggregation Method
+For each layer l and token n, we concatenate the head-level
+value vectors to obtain a d-dimensional token embedding:
+vl
+n = vl,1
+n ; . . . ; vl,H
+n
+ ∈ Rd.
+We then summarize the sequence at layer l by mean pooling
+over tokens:
+ˆvl = 1
+N
+NX
+n=1
+vl
+n ∈ Rd.
+Let S ⊆ {1, . . . , L} be the set of layers used for aggregation.
+The VA sentence embedding is:
+Vagg(x1:N ) = 1
+|S|
+X
+l∈S
+ˆvl ∈ Rd.
+It should be noted that VA requires only a standard forward
+pass to read {vl,h
+n } from each attention layer without any
+extra prompt and calculation. The aggregation itself is mean
+pooling over tokens and layers, where the layer selection S
+is selected according to the following section.
+4.2. Layer Selection for VA
+Prior studies on encoder-only LMs reveal a general progres-
+sion from surface-level features in early layers to higher-
+level linguistic representations in deeper layers (de Vries
+et al., 2020; Jawahar et al., 2019). For autoregressive LLMs,
+de Llano et al. (2025) further observe that strong single-
+layer sentence embeddings typically emerge near the latter
+part of the network (around 85% depth). Building on these
+insights, we conduct an empirical study to identify suitable
+layers for VA aggregation and use the results to define a
+default aggregation range S.
+Experimental Setup We evaluate single-layer VA by set-
+ting S = {l} for each layer l, and then compute performance
+using the corresponding embedding for multiple tasks. This
+yields a performance–depth curve that illustrates how task
+performance varies across layers. To mitigate selection bias,
+we ensure that the data used for layer selection does not over-
+lap with the final evaluation test sets (see Section 5). Specif-
+ically, we use: (i) the test sets of BiorxivClusteringP2P.v2
+and MedrxivClusteringP2P.v2 for clustering; (ii) SciDoc-
+sRR validation and AskUbuntuDupQuestions test sets for
+4
+LLM-based Embeddings
+Figure 3. Score by Layers for Llama (Left) and Qwen (Right)
+reranking; (iii) STS15 test and STSBenchmark validation
+for semantic textual similarity (STS); (iv) EmotionClassifi-
+cation and Banking77Classification training sets for classi-
+fication; and (v) SciFact training and NFCorpus validation
+sets for retrieval. We evaluate our method on two fami-
+lies of LLM backbones: LLaMA-2 and Qwen-3. While
+LLaMA-2 employs standard multi-head attention, Qwen-3
+uses grouped-query attention.
+Results and Analysis Figure 3 reports the layer-wise re-
+sults for LLaMA-2 (7B) and Qwen-3 (8B), with the best-
+performing layer for each task indicated. Although the opti-
+mal single layer varies across tasks, it tends to lie within a
+relatively narrow range. For LLaMA-2, performance gener-
+ally increases smoothly with depth, with task-specific peaks
+emerging in the late-middle layers. In contrast, Qwen-3
+shows a less consistent pattern: for most tasks (except clas-
+sification), performance rises with depth, slightly decreases
+in the mid-to-late depth, and then increases again near the
+last layers. Notably, reranking performance peaks much ear-
+lier in Qwen-3, whereas deeper layers are more beneficial
+for retrieval and STS tasks.
+These observations highlight two key points. First, relying
+on a single fixed layer is brittle, as different tasks favor rep-
+resentations from different depths. Second, aggregating a
+small set of strong layers mitigates sensitivity to any indi-
+vidual layer while retaining the advantages of deep-layer
+representations. We therefore determine the default layer set
+S by selecting layers that consistently perform well on the
+retrieval task (the most challenging task) while excluding
+those that repeatedly degrade performance across tasks. For
+LLaMA-2, this selection corresponds to a contiguous deep-
+middle range (layers 20–27). For Qwen-3, the strongest
+layers are concentrated nearer the last layer, and we use
+layers (26, 27, 29, 30, and 31). Unless otherwise specified,
+VA aggregates value vectors over these model-specific sets.
+5. Evaluation of VA-based Embeddings
+5.1. Experimental Setup
+Compared Methods We compare our method against
+several established approaches for sentence representation:
+LT and WMP (Muennighoff, 2022) use the last token or
+weighted mean pooling of the last layer for representation.
+HS denotes hidden-state pooling baselines defined in Sec-
+tion 2 and summarized in Appendix A. EE (Springer et al.,
+2025) duplicates the input and applies mean-pooling of the
+last hidden states in the second copy, allowing the preceding
+tokens (in the second copy) attend to the later tokens (of the
+first copy) in causal LMs. PromptEOL (Lei et al., 2024) ex-
+ploits the prompt “This sentence: {sentence} means in one
+word:” as a way to fuse sentence semantics to the last token.
+MetaEOL (Lei et al., 2024) is built on this idea but uses
+eight ChatGPT-4-designed meta-task prompts. Recently,
+CP (Cheng et al., 2025) is also built upon PromptEOL by
+adding an auxiliary prompt to elicit more informative em-
+beddings. We categorize EE, PromptEOL, MetaEOL, and
+PromptEOL+CP as prompt-based methods, distinguishing
+them from prompt-free methods such as LT, HS, and WMP.
+Although they differ in design (with or without prompts),
+all these baselines use hidden states in different ways.
+Evaluation Datasets We evaluate on 14 downstream tasks
+across six dataset groups, covering clustering, retrieval, se-
+mantic textual similarity (STS), classification, and reranking.
+This setup allows us to assess how well different pooling
+schemes generalize across a broad set of sentence embed-
+ding applications. To ensure that our ablation studies and
+analyses are not biased toward a particular category or task,
+this subset was constructed to include tasks from each cate-
+gory in proportions that approximately match those in the
+full MTEB benchmark. The evaluation metrics followed the
+MTEB standard (Muennighoff et al., 2023): Accuracy for
+classification tasks, V-measure for clustering, NDCG@10
+for retrieval, MAP for reranking, and Spearman correlation
+for STS. Detailed information in Table 5 in the Appendix.
+LLM Backbone Models We use LLaMA-2 (7B) and
+Qwen-3 (8B), consistent with Section 4. Notably, due to
+the grouped-query attention (GQA) mechanism in Qwen-3
+8B, value projections are shared across four query groups.
+As a result, each value vector has one fourth of the hidden-
+state dimension, corresponding to 1024 dimensions for VA
+compared to 4096 for HS.
+5.2. Results and Discussion
+Main Result Analysis Table 1 shows the performance
+of VA in comparison with different baselines. On average,
+VA (LLaMA-2) outperforms all prompt-free methods and
+most prompt-based methods, falling short only to MetaEOL
+(Qwen-3). Notably, VA is a prompt-free method that incurs
+no additional inference cost, as it does not increase sentence
+encoding time. In contrast, MetaEOL requires eight forward
+passes, each corresponding to a distinct prompt, resulting
+in roughly an 8× higher encoding time compared to VA.
+The largest gains of VA are observed in retrieval tasks. For
+5
+LLM-based Embeddings
+Table 1. Performance comparison of different models on a subset of MTEB tasks. “Prompt-free” methods do not append any additional
+semantic prompt to the input (beyond the standard evaluation instruction), whereas “Prompt-based” methods introduce extra semantic
+prompts. Our method is prompt-free. MetaEOL is an ensemble that uses eight prompts and therefore requires eight forward passes per
+example. Echo Embedding (EE) repeats the input sequence and can be viewed as a self-prompting strategy.
+Model Dim Backbone
+Clustering Retrieval STS Classification Reranking
+Avg.
+Bior. Medr. Twen. SciF. NFCo. Argu. STS17 SICK-R STSB. Bank. Emot. Spri. Stac. SciD.
+Prompt-free Methods
+HS (Full) 4096 Llama-2 13.69 19.86 5.67 0.10 1.43 44.11 43.90 44.46 11.18 64.24 39.34 58.41 32.38 58.69 31.25
+HS (Half) 4096 Llama-2 19.86 22.68 6.30 0.23 1.46 47.8 44.21 46.64 12.15 67.58 38.67 61.83 33.04 60.79 32.37
+HS 4096 Llama-2 20.28 23.01 6.04 0.26 1.52 47.51 44.17 46.46 12.33 66.46 38.93 62.89 33.03 61.12 33.14
+HS (Full) 4096 Qwen-3 7.42 17.47 5.27 0.17 1.58 40.71 61.05 38.97 23.54 58.95 34.85 46.83 28.41 53.08 29.88
+HS (Half) 4096 Qwen-3 11.55 19.57 5.77 0.67 1.75 43.27 62.53 40.94 27.84 60.61 34.69 53.14 29.25 54.98 31.90
+HS 4096 Qwen-3 12.87 20.73 5.72 0.71 1.87 42.50 64.11 42.54 28.06 61.61 34.62 56.40 31.16 58.10 32.93
+LT. 4096 Llama-2 15.99 17.42 15.96 2.17 1.31 14.24 57.8 55.63 45.72 68.65 29.85 47.01 32.07 58.83 33.05
+WMP 4096 Llama-2 19.73 19.47 14.54 38.89 6.13 33.59 63.91 57.52 58.01 66.42 30.97 58.48 37.74 61.05 40.46
+LT 4096 Qwen-3 13.56 16.22 13.57 5.06 1.57 8.42 38.56 41.48 28.53 55.82 29.80 9.77 25.25 47.35 23.93
+WMP 4096 Qwen-3 9.44 15.82 8.19 5.15 1.41 22.12 51.10 44.17 34.08 60.52 30.01 28.67 32.04 49.74 28.03
+Prompt-based Methods
+EE 4096 Llama-2 22.94 23.15 25.74 25.61 9.97 25.24 80.51 70.18 71.94 81.79 45.00 68.48 40.79 60.15 46.54
+PrompEOL 4096 Llama-2 22.49 21.14 31.47 27.16 13.59 11.65 79.67 73.82 75.32 76.37 47.13 26.08 37.65 66.22 43.55
+MetaEOL 4096 Llama-2 30.95 26.56 40.03 40.59 16.41 21.75 82.29 76.88 76.87 82.26 51.05 48.24 39.87 77.91 50.83
+PrompEOL + CP 4096 Llama-2 22.72 21.26 28.98 33.42 17.43 14.57 80.93 72.69 74.73 77.51 47.70 28.42 37.54 66.55 44.60
+PromptEOL 4096 Qwen-3 23.43 23.57 27.70 18.27 4.56 12.12 72.84 67.98 67.80 70.06 47.22 36.49 38.91 73.85 41.77
+MetaEOL 4096 Qwen-3 29.21 27.01 36.74 47.59 12.90 30.81 80.72 74.24 71.65 81.90 52.55 73.88 41.41 77.53 52.72
+PrompEOL + CP 4096 Qwen-3 27.66 24.67 34.76 27.35 18.13 14.84 74.14 69.38 73.22 71.14 48.66 22.15 40.60 75.90 44.47
+Our Methods
+VA (Full) 4096 Llama-2 31.69 28.30 26.34 51.28 21.00 42.75 74.51 61.47 60.94 73.89 39.58 71.42 41.63 76.16 50.07
+VA (Half) 4096 Llama-2 32.45 28.65 27.95 52.41 23.52 44.26 74.08 61.49 61.72 75.19 39.54 73.75 41.51 76.70 50.94
+VA 4096 Llama-2 33.13 29.56 30.59 54.58 25.89 45.76 75.37 61.92 63.03 76.15 39.85 75.97 42.08 77.59 52.25
+VA (Full) 1024 Qwen-3 26.85 24.65 20.59 58.37 18.69 41.41 71.70 60.38 60.77 75.72 33.20 81.92 44.72 70.45 49.24
+VA (Half) 1024 Qwen-3 26.94 24.29 21.92 58.29 18.80 41.49 71.83 60.47 60.91 75.71 32.91 82.10 44.79 70.44 49.35
+VA 1024 Qwen-3 31.46 26.61 25.35 58.93 21.84 43.11 76.28 62.98 63.24 76.49 35.65 81.29 45.51 73.48 51.59
+instance, while MetaEOL achieves the best overall perfor-
+mance on SciFact, VA surpasses it by 10 points on the same
+task. In semantic textual similarity (STS), prompt-based
+methods still hold an advantage; however, VA, as a prompt-
+free method, substantially narrows the gap. For example,
+among prompt-free baselines, WMP achieves the highest
+STS performance, yet VA exceeds it across all STS datasets,
+with more than a 10-point improvement on STS17. These
+conclusions also hold for Qwen-3, indicating that the effect
+generalizes across different backbone families and atten-
+tion mechanisms. Notably, VA (Qwen-3) achieves highly
+competitive performance while having only one-fourth of
+the dimensionality, making it substantially more efficient in
+both sentence encoding and similarity computation.
+VA Layer Selection Analysis Across both Qwen-3 and
+LLaMA-2, selecting a subset of layers using the strategy
+described in Section 4 consistently enhances VA perfor-
+mance. Aggregating from deeper layers (VA (Half)) also
+tends to outperform pooling over all layers (VA (Full)).
+With the selected-layer configuration, VA achieves an aver-
+age improvement of about 2 points compared to full-layer
+aggregation (VA (Full)) on both backbones, with the largest
+gains observed in clustering and retrieval tasks. Restricting
+aggregation to the last half of layers produces a smaller but
+generally positive effect with both LLM backbones.
+6. Alternative Strategies for Value Aggregation
+6.1. From VA to Weighted VA (WVA)
+Our default VA applies mean pooling over tokens. This de-
+sign is simple and parameter-free, but prior work shows that
+token weighting can substantially influence embedding qual-
+ity (Muennighoff, 2022). This motivates the Weighted VA
+(WVA) variant, in which aggregation assigns non-uniform
+importance to tokens. This section reports downstream per-
+formance, while Appendix E provides a probing-based inter-
+pretation of why weighting helps: when token weights align
+with attention patterns that support continuation, weighted
+pooling of value vectors better preserves information pre-
+dictive of subsequent tokens.
+Weighting Strategies A simple weighting strategy is to
+use the attention weights αl,h
+n,j produced by the last token xn,
+which define its attention distribution over the prefix tokens.
+The weighted value aggregation, therefore, corresponds to
+the head output zl
+n of the last token as described in Equa-
+tions 1 and 2. We refer to this approach as Weighted Value
+Aggregation using Last Token or WVA (LT).
+Directly using the head attention output zl
+n of the last token
+as a sentence representation suffers from the same limitation
+as using the last token’s hidden state (LT): the final token
+alone does not capture the full-sentence semantics. Inspired
+6
+LLM-based Embeddings
+Table 2. Performance of alternative value aggregation strategies evaluated on various tasks from the MTEB benchmark.
+Model Dim Backbone
+Clustering Retrieval STS Classification Reranking
+Avg.
+Bior. Medr. Twen. SciF. NFCo. Argu. STS17 SICK-R STSB. Bank. Emot. Spri. Stac. SciD.
+Baselines
+PrompEOL 4096 Llama-2 22.49 21.14 31.47 27.16 13.59 11.65 79.67 73.82 75.32 76.37 47.13 26.08 37.65 66.22 43.55
+VA 4096 Llama-2 32.45 28.65 27.95 52.41 23.52 44.26 74.08 61.49 61.72 75.19 39.54 73.75 41.51 76.70 50.94
+MetaEOL 4096 Qwen-3 29.21 27.01 36.74 47.59 12.90 30.81 80.72 74.24 71.65 81.90 52.55 73.88 41.41 77.53 52.72
+Weighted Value Aggregation
+WVA (LT) 4096 Llama-2 15.83 16.33 11.48 19.75 3.04 16.39 63.58 57.01 58.69 62.28 29.31 13.68 28.78 55.62 32.27
+WVA (PromptEOL) 4096 Llama-2 27.40 22.14 30.67 45.32 24.22 31.27 85.02 73.98 77.11 81.15 53.66 57.21 43.07 75.44 51.98
+WVA (FutureEOL) 4096 Llama-2 30.46 25.21 35.04 51.80 21.54 37.95 85.04 72.60 74.64 81.54 53.86 75.83 42.86 77.22 54.69
+WVA (LT) 4096 Qwen-3 22.99 21.31 29.38 35.89 10.74 14.03 56.37 60.07 54.75 68.92 32.90 20.10 30.25 64.44 37.30
+WVA (PromptEOL) 1024 Qwen-3 21.82 21.93 27.22 17.87 13.42 11.16 73.86 67.80 70.73 70.20 49.03 16.87 38.42 69.60 40.71
+WVA (FutureEOL) 1024 Qwen-3 25.38 22.34 24.33 24.42 10.69 16.02 75.63 62.73 68.23 74.21 51.75 28.28 38.65 63.61 41.88
+Aligned Weighted Value Aggregation
+AlignedWVA (PromptEOL) 4096 Llama-2 28.82 23.45 31.20 45.31 25.13 32.44 83.33 73.80 76.74 82.09 52.68 60.93 43.52 75.76 52.51
+AlignedWVA (FutureEOL) 4096 Llama-2 31.25 26.39 33.82 51.40 25.32 39.67 83.38 71.54 73.36 82.62 52.78 78.42 43.39 76.44 54.98
+AlignedWVA (PromptEOL) 4096 Qwen-3 35.56 29.73 48.04 55.44 31.55 34.53 83.06 76.14 77.48 81.52 54.18 59.54 45.88 83.01 56.83
+AlignedWVA (FutureEOL) 4096 Qwen-3 33.62 28.03 44.51 62.98 32.04 42.88 84.31 68.55 75.53 82.06 51.75 69.50 43.26 76.79 56.84
+by PromptEOL, we wrap the sentence with the PromptEOL
+prompt template, thereby encouraging the model to fuse
+sentence-level information into the final token. We then use
+zl
+n as the sentence representation. This approach is referred
+to as WVA (PromptEOL).
+Inspired by Section 3.2, which shows that sentence seman-
+tics are determined by continuation, we propose FutureEOL,
+which aims to capture the continuation of a sentence using
+the prompt “Forecasting the subsequent tokens {sentence}
+in one word:”. We then apply this prompt within the WVA
+framework, referring to this method as WVA (FutureEOL).
+Experimental Results and Discussion Table 2 presents
+the experimental results. As shown, WVA (FutureEOL)
+with LLaMA-2 surpasses the strong MetaEOL baseline by
+2 points on average. Compared with WVA (LT), which
+assigns weights to the value vectors of all tokens based
+on next-token prediction, WVA (PromptEOL)—which ex-
+plicitly focuses the model on predicting the next token
+through a prompt—achieves an overall improvement of
+nearly 20 points, highlighting the importance of using
+meaningful prompts in WVA. In nearly all tasks, WVA
+(PromptEOL) outperforms WVA (LT) by about 10 points.
+Furthermore, transitioning from WVA (PromptEOL) to
+WVA (FutureEOL) yields additional gains, particularly on
+clustering and retrieval datasets (except NFCor). On STS
+datasets, WVA (FutureEOL) shows a slight decrease, while
+in classification tasks, it brings modest improvements on
+Bank and Emot but a substantial gain on Spri.
+6.2. From WVA to Aligned WVA
+WVA with prompting operates in the attention value
+space (concatenated across heads), whereas many base-
+lines—including EOL-style representations—operate in the
+model’s residual-stream space. To align these spaces, we
+introduce an Aligned WVA variant that applies the output
+projection Wl
+O to map the weighted aggregation back into
+the residual stream as defined in Equation 3. For GQA
+models (Qwen-3), this projection maps the value aggrega-
+tion vectors into the higher-dimensional (4096) and more
+expressive space. We further derive different variants of
+AlignedWVA using PromptEOL and FutureEOL.
+Results and Discussion AlignedWVA improves upon
+WVA for both LLaMA-2 and Qwen-3 under both
+PromptEOL and FutureEOL. As expected, the alignment
+provides a substantially larger benefit on Qwen-3, improv-
+ing performance by roughly 15 points on average for both
+prompts. Notably, FutureEOL with AlignedWVA surpasses
+the ensemble-based MetaEOL baseline on both backbones
+by a considerable margin. In particular, the best-performing
+variant, AlignedWVA (FutureEOL) with Qwen-3, exceeds
+MetaEOL with Qwen-3 by more than 4 points on average.
+It is noteworthy that AlignedWVA incurs significantly low
+cost for encoding, as it does not need to pair each encoded
+sentence with different prompts as in MetaEOL.
+7. Training LLM Embedding Models by
+Finetuning VA
+Recent LLM-based embedding models (e.g., LLM2Vec
+(BehnamGhader et al., 2024)) are typically trained by fine-
+tuning hidden-state representations using contrastive learn-
+ing. To examine whether contrastive fine-tuning can sim-
+ilarly enhance VA embeddings, we fine-tune the same
+LLama-2 (7B) backbone with LoRA, applying an identi-
+cal set of target modules for both VA and the hidden-state
+mean-pooling baseline (Finetune-MP). Specifically, we ap-
+ply LoRA to the self-attention projections Wl
+Q, Wl
+V , Wl
+O
+and the feed-forward projections Wl
+1, Wl
+2. Under this con-
+trolled setup, the only distinction between Finetune-VA and
+Finetune-MP lies in the pooling operator used to obtain the
+sentence embedding: Finetune-VA pools attention value
+7
+LLM-based Embeddings
+Figure 4. Results on the “Average of Major Task Categories” with
+VA and other finetuned models (LLama-2 (7B) backbone)
+vectors across tokens and layers, whereas Finetune-MP per-
+forms mean pooling over last-layer hidden states.
+We also evaluate a lighter variant, Finetune-VA (Atten-
+tion Only), which applies LoRA exclusively to the self-
+attention modules Wl
+Q, Wl
+K , Wl
+V , Wl
+O and the corre-
+sponding layer-normalization weights. This configuration
+reduces the number of trainable parameters to less than one
+quarter of that in Finetune-MP, while keeping all other
+training settings identical.
+Training Objective We perform supervised contrastive
+learning using annotated positive pairs. Negative samples
+are constructed via in-batch sampling and hard-negative
+sampling, where hard negatives are pre-selected using the
+E5 data with a cross-encoder model (Wang et al., 2024).
+Following LLM2Vec, we use 1,024,000 training examples
+drawn from the public portions of its training datasets.
+Results and Discussion Figure 4 shows that Finetune-VA
+improves VA embeddings and yields consistent gains over
+Finetune-MP. The improvements are greatest on reranking
+and STS, with gains of 3.8 and 2.02 points, respectively. We
+observe small degradations on clustering and classification
+task, suggesting that value-based training primarily benefits
+tasks that rely on fine-grained semantic matching, while the
+effect is weaker for category-level discrimination. Finetune-
+VA (Attention Only) can achieve almost a consistent effect
+only training 1/4 of the parameters, which suggests the
+advantages of finetuning VA. Future research should focus
+on developing more effective training strategies to fully
+exploit the representation advantages of VA.
+8. Related Works
+Large language models generate contextualized represen-
+tations at multiple layers and token positions. To obtain
+fixed-length embeddings, aggregation is typically performed
+along both the layer dimension and the sequence dimension.
+Layer-wise aggregation of hidden states Different lay-
+ers capture information at varying levels of granularity, with
+earlier layers focusing on local lexical and syntactic fea-
+tures, while deeper layers optimize pre-training objectives.
+Consequently, intermediate layers are often more suitable
+for embedding tasks like retrieval and clustering (Queipo-
+de-Llano et al., 2025; Stankeviˇcius & Lukoˇseviˇcius, 2024;
+Vu et al., 2022). Methods like MLTP (Tang & Yang, 2024),
+MoEE (Li & Zhou, 2025), and LMORT (Sun et al., 2024)
+explore multi-layer aggregation, using pooling and Mixture-
+of-Experts routing weights for improved embeddings.
+Sequence-level aggregation Once layers are selected, the
+next step is to aggregate sequence- or token-level represen-
+tations. Common methods include mean pooling (Ni et al.,
+2022), weighted mean pooling (Muennighoff, 2022), and
+pooling over special tokens like [CLS] in encoder-only mod-
+els (Reimers & Gurevych, 2019) and [EOS] in decoder-only
+models (Muennighoff, 2022). Training-based approaches
+like NV-Embed-v1 (Lee et al., 2025) introduce learnable
+pooling layers that aggregate token-level information.
+Prompt-based aggregation Prompt-based methods fo-
+cus information by using instruction-style templates.
+PromptEOL (Lei et al., 2024) and Echo embeddings
+(Springer et al., 2025) aggregate information from specific
+tokens. MetaEOL (Lei et al., 2024) and CP (Cheng et al.,
+2025) further enhance sentence representations using meta-
+task prompts and auxiliary instructions.
+While the methods above primarily rely on hidden states
+for sentence embeddings, our work takes a novel approach
+by exploring other internal signals from LLMs, aiming to
+enrich embeddings beyond traditional hidden-state ones.
+9. Conclusion
+In this work, we revisited the foundation of sentence rep-
+resentation in large language models (LLMs) and demon-
+strated that value vectors—rather than hidden states—serve
+as a stronger basis for capturing sentence-level semantics.
+Building on this insight, we proposed Value Aggregation
+(VA), a simple yet effective method that aggregates value
+vectors across layers and tokens to form powerful training-
+free embeddings. We further introduced Aligned Weighted
+Value Aggregation (AlignedWVA), which aligns weighted
+value vectors with the residual stream, achieving state-of-
+the-art performance among training-free LLM-based em-
+beddings while maintaining low computational cost. Finally,
+we showed a method for fine-tuning VA that can yield com-
+petitive results to fine-tuned mean-pooled HS baselines with
+far fewer parameters.
+Our findings reveal that the value space of LLMs encodes
+rich semantic information that has been largely overlooked.
+We believe this work will inspire further research into value-
+based representations and their potential to bridge generative
+modeling and representation learning.
+8
+LLM-based Embeddings
+Impact Statement
+This paper presents work whose goal is to advance the field
+of Machine Learning. There are many potential societal
+consequences of our work, none which we feel must be
+specifically highlighted here.
+References
+BehnamGhader, P., Adlakha, V., Mosbach, M., Bahdanau,
+D., Chapados, N., and Reddy, S. Llm2vec: Large lan-
+guage models are secretly powerful text encoders. CoRR,
+2024.
+Cheng, Z., Wang, Z., Fu, Y., et al. Contrastive prompting
+enhances sentence embeddings in llms through inference-
+time steering. In Proceedings of the 63rd Annual Meeting
+of the Association for Computational Linguistics (Volume
+1: Long Papers), 2025.
+Davidson, D. Truth and meaning. In Philosophy, Language,
+and Artificial Intelligence: Resources for Processing Nat-
+ural Language. Springer, 1967.
+de Llano, E. Q., ´Alvaro Arroyo, Barbero, F., Dong, X.,
+Bronstein, M., LeCun, Y., and Shwartz-Ziv, R. Attention
+sinks and compression valleys in llms are two sides of
+the same coin, 2025.
+de Vries, W., van Cranenburgh, A., and Nissim, M. What’s
+so special about BERT’s layers? a closer look at the
+NLP pipeline in monolingual and multilingual models. In
+Findings of the Association for Computational Linguis-
+tics: EMNLP, 2020.
+Enevoldsen, K. C., Chung, I., Kerboua, I., Kardos, M., and
+others. MMTEB: massive multilingual text embedding
+benchmark. In The Thirteenth International Conference
+on Learning Representations, ICLR 2025, 2025.
+Gao, T., Yao, X., and Chen, D. Simcse: Simple contrastive
+learning of sentence embeddings. In Proceedings of the
+2021 Conference on Empirical Methods in Natural Lan-
+guage Processing, EMNLP, 2021.
+Jawahar, G., Sagot, B., and Seddah, D. What does BERT
+learn about the structure of language? In Korhonen, A.,
+Traum, D., and M`arquez, L. (eds.), Proceedings of the
+57th Annual Meeting of the Association for Computa-
+tional Linguistics, Florence, Italy, July 2019. Association
+for Computational Linguistics.
+Karpukhin, V., Oguz, B., Min, S., Lewis, P., Wu, L., Edunov,
+S., Chen, D., and Yih, W. Dense passage retrieval for
+open-domain question answering. In Webber, B., Cohn,
+T., He, Y., and Liu, Y. (eds.), Proceedings of the 2020
+Conference on Empirical Methods in Natural Language
+Processing, EMNLP, 2020.
+Lee, C., Roy, R., Xu, M., Raiman, J., Shoeybi, M., Catan-
+zaro, B., and Ping, W. Nv-embed: Improved techniques
+for training llms as generalist embedding models. In The
+Thirteenth International Conference on Learning Repre-
+sentations, ICLR, 2025.
+Lei, Y., Wu, D., Zhou, T., Shen, T., Cao, Y., Tao, C., and
+Yates, A. Meta-task prompting elicits embeddings from
+large language models. In Proceedings of the 62nd An-
+nual Meeting of the Association for Computational Lin-
+guistics ACL, 2024.
+Li, Z. and Zhou, T. Your mixture-of-experts LLM is secretly
+an embedding model for free. In The Thirteenth Inter-
+national Conference on Learning Representations, ICLR
+2025, Singapore, April 24-28, 2025. OpenReview.net,
+2025.
+Muennighoff, N. SGPT: GPT sentence embeddings for
+semantic search. CoRR, abs/2202.08904, 2022.
+Muennighoff, N., Tazi, N., Magne, L., and Reimers, N.
+MTEB: massive text embedding benchmark. In Vlachos,
+A. and Augenstein, I. (eds.), Proceedings of the 17th
+Conference of the European Chapter of the Association
+for Computational Linguistics, EACL, 2023.
+Muennighoff, N., Su, H., Wang, L., Yang, N., Wei, F., Yu,
+T., Singh, A., and Kiela, D. Generative representational
+instruction tuning. In The Thirteenth International Con-
+ference on Learning Representations, ICLR 2025, Singa-
+pore, April 24-28, 2025. OpenReview.net, 2025.
+Ni, J., ´Abrego, G. H., Constant, N., Ma, J., Hall, K. B., Cer,
+D., and Yang, Y. Sentence-t5: Scalable sentence encoders
+from pre-trained text-to-text models. In Findings of the
+Association for Computational Linguistics: ACL, 2022.
+Queipo-de-Llano, E., Arroyo, A., Barbero, F., Dong, X.,
+Bronstein, M. M., LeCun, Y., and Shwartz-Ziv, R. Atten-
+tion sinks and compression valleys in llms are two sides
+of the same coin. CoRR, abs/2510.06477, 2025.
+Reimers, N. and Gurevych, I. Sentence-bert: Sentence em-
+beddings using siamese bert-networks. In Proceedings
+of the 2019 Conference on Empirical Methods in Natu-
+ral Language Processing and the 9th International Joint
+Conference on Natural Language Processing, EMNLP-
+IJCNLP, 2019.
+Skean, O., Arefin, M. R., Zhao, D., Patel, N., Naghiyev, J.,
+LeCun, Y., and Shwartz-Ziv, R. Layer by layer: Uncover-
+ing hidden representations in language models. In Forty-
+second International Conference on Machine Learning,
+ICML, 2025.
+9
+LLM-based Embeddings
+Springer, J. M., Kotha, S., Fried, D., Neubig, G., and Raghu-
+nathan, A. Repetition improves language model embed-
+dings. In The Thirteenth International Conference on
+Learning Representations, ICLR 2025, Singapore, April
+24-28, 2025. OpenReview.net, 2025.
+Stankeviˇcius, L. and Lukoˇseviˇcius, M. Extracting sentence
+embeddings from pretrained transformer models. Applied
+Sciences, 14, 2024.
+Su, C., Shi, D., Huang, S., Du, J., Meng, C., Cheng, Y.,
+Wang, W., and Lin, Z. Training llms to be better text
+embedders through bidirectional reconstruction. CoRR,
+abs/2509.03020, 2025.
+Sun, S., Zhang, H., Liu, Z., Bao, J., and Song, D. Llm-
+oriented retrieval tuner, 2024.
+Tang, Y. and Yang, Y. Pooling and attention: What are ef-
+fective designs for llm-based embedding models?, 2024.
+Thakur, N., Reimers, N., R¨uckl´e, A., Srivastava, A., and
+Gurevych, I. BEIR: A heterogenous benchmark for zero-
+shot evaluation of information retrieval models. CoRR,
+abs/2104.08663, 2021.
+Vu, D. N. L., Moosavi, N. S., and Eger, S. Layer or represen-
+tation space: What makes bert-based evaluation metrics
+robust? In Proceedings of the 29th International Confer-
+ence on Computational Linguistics, COLING, 2022.
+Wang, L., Li, L., Dai, D., Chen, D., Zhou, H., Meng,
+F., Zhou, J., and Sun, X. Label words are anchors:
+An information flow perspective for understanding in-
+context learning. In Proceedings of the 2023 Conference
+on Empirical Methods in Natural Language Processing,
+EMNLP, 2023.
+Wang, L., Yang, N., Huang, X., Yang, L., Majumder, R.,
+and Wei, F. Multilingual E5 text embeddings: A technical
+report. CoRR, 2024.
+Wendler, C., Veselovsky, V., Monea, G., and West, R. Do
+llamas work in English? on the latent language of multi-
+lingual transformers. In Proceedings of the 62nd Annual
+Meeting of the Association for Computational Linguistics
+(Volume 1: Long Papers), Bangkok, Thailand, 2024.
+Wu, Z., Yu, X., Yogatama, D., Lu, J., and Kim, Y. The
+semantic hub hypothesis: Language models share seman-
+tic representations across languages and modalities. In
+Yue, Y., Garg, A., Peng, N., Sha, F., and Yu, R. (eds.),
+International Conference on Learning Representations,
+2025.
+Xiao, S., Liu, Z., Zhang, P., Muennighoff, N., Lian, D., and
+Nie, J. C-pack: Packed resources for general chinese
+embeddings. In Proceedings of the 47th International
+ACM SIGIR Conference on Research and Development
+in Information Retrieval, SIGIR, 2024.
+Zhang, Y., Zhao, Y., Hu, C., Jiao, B., Jiang, D., Miao, R.,
+and Nguyen, C.-T. Learning to compress: Unlocking the
+potential of large language models for text representation,
+2025.
+10

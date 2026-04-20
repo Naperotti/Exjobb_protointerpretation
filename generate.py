@@ -63,13 +63,9 @@ def save_results(results, output_path):
 
 
 if __name__ == "__main__":
-    selected_prompt = next((p for p in PROMPTS if p["id"] == PROMPT_ID), None)
-    if selected_prompt is None:
-        raise ValueError(f"Prompt id '{PROMPT_ID}' not found in prompts.py")
-
     results = generate_sequences(
         model_name=MODEL_NAME,
-        prompts=[selected_prompt],
+        prompts=PROMPTS,
         max_length=MAX_LENGTH,
         temperature=TEMPERATURE,
         top_k=TOP_K,
