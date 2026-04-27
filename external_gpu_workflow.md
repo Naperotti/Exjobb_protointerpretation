@@ -95,3 +95,37 @@ After changing `requirements.txt`, run once on remote:
 ```bash
 ssh tony@100.121.67.110 "source ~/venv/bin/activate && cd ~/Exjobb_protointerpretation && pip install -r requirements.txt"
 ```
+
+## 6) Download generated data from remote to local
+
+If you are currently inside SSH (`tony@spark-228b...`), that shell is running on remote Linux.
+
+- You only need to exit SSH if you want to run a command that writes to a local Windows path like `C:\Users\...`.
+- You can also stay connected and open a second local terminal, then run the copy command there.
+
+Why:
+
+- `C:\Users\...` exists on your local machine, not on the remote machine.
+- So a copy command targeting your local Windows folder must be started from a local terminal.
+
+On remote, leave SSH:
+
+```bash
+exit
+```
+
+On your local machine, run one of these:
+
+PowerShell:
+
+```powershell
+scp tony@100.121.67.110:~/Exjobb_protointerpretation/data/all_prompts_test.json "C:\Users\naper\OneDrive\Dokument\GitHub\Exjobb_protointerpretation\data\"
+```
+
+Git Bash:
+
+```bash
+scp tony@100.121.67.110:~/Exjobb_protointerpretation/data/all_prompts_test.json /c/Users/naper/OneDrive/Dokument/GitHub/Exjobb_protointerpretation/data/
+```
+
+That will copy the remote file down to your local `data` folder and overwrite the old one.

@@ -7,57 +7,132 @@
     "temperature": 0.7,
     "top_k": 50,
     "top_p": 0.95,
-    "num_return": 5
+    "num_return": 20
   },
   "prompts": [
     {
       "prompt": "The meaning of life is",
       "sequences": {
-        "1": "The meaning of life is a question that has fascinated philosophers, scientists, and people from all walks of life for centuries. From the ancient Greek philosopher S",
-        "2": "The meaning of life is a topic that has fascinated philosophers, scientists, and thinkers for millennia. It asks us to ponder the fundamental question of why we",
-        "3": "The meaning of life is a question that has been debated for millennia, with various philosophical, scientific, and religious perspectives offering their own take. From a",
-        "4": "The meaning of life is a question that has intrigued philosophers, scientists, and everyday people alike for centuries. It is a question that has been explored in",
-        "5": "The meaning of life is the question that has haunted humanity for millennia, prompting countless philosophers, scientists, and spiritual leaders to seek answers. In the context"
+        "1": "The meaning of life is the question that has puzzled philosophers, scientists, and thinkers for centuries. It is a profound and enduring inquiry that has led to",
+        "2": "The meaning of life is a question that has been pondered by philosophers, scientists, and people of all walks of life. It's a question that",
+        "3": "The meaning of life is a central question in human history, and has been explored by philosophers, scientists, and religious leaders alike. In the context of",
+        "4": "The meaning of life is a fundamental question that has been pondered by philosophers, scientists, and religious leaders for centuries. In this unit, we will",
+        "5": "The meaning of life is a question that has been asked by humans for centuries, and it's a topic that has been explored by various philosophers, scientists",
+        "6": "The meaning of life is not so simple. It's the most complex question in philosophy. What do you think? Why do you think so?\n\nThe",
+        "7": "The meaning of life is one of the most important questions in philosophy and in science. It has been asked by philosophers for centuries, and by scientists for",
+        "8": "The meaning of life is a long-standing philosophical question that has been explored by thinkers, scientists, and religious figures throughout history. This question is often asked",
+        "9": "The meaning of life is a question that has been asked by humans for centuries, and it has been the subject of philosophical, religious, scientific, and",
+        "10": "The meaning of life is a philosophical question that has intrigued thinkers and scientists for centuries. While there are many perspectives on this topic, one of the most",
+        "11": "The meaning of life is a question that has occupied the minds of philosophers, scientists, and theologians for centuries. It is a profound and complex topic",
+        "12": "The meaning of life is a profound and enduring question that has captivated philosophers, scientists, and thinkers throughout history. It is a question that stretches beyond",
+        "13": "The meaning of life is a question that has been debated for millennia, and it has been the subject of many philosophical, scientific, and religious discussions.",
+        "14": "The meaning of life is one of the most profound questions that has ever been asked. The search for meaning has been a central concern of philosophers, scientists",
+        "15": "The meaning of life is a question that has been asked by philosophers, scientists, and even ordinary people for centuries. The question of whether life has meaning",
+        "16": "The meaning of life is a profound and enduring question that has captivated philosophers, scientists, and thinkers for millennia. It is a question that transcends",
+        "17": "The meaning of life is a question that has been debated for millennia, with each culture, philosophy, and religion offering its own perspective. However, the",
+        "18": "The meaning of life is a fundamental question that has intrigued philosophers, scientists, and thinkers for centuries. It is often framed as a search for purpose,",
+        "19": "The meaning of life is the central question of philosophy, but in the context of modernity, the meaning of life is not just about the search for",
+        "20": "The meaning of life is a question that has occupied the minds of philosophers, scientists, and thinkers for centuries. It is a question that touches on the"
       }
     },
     {
       "prompt": "In the beginning there was",
       "sequences": {
-        "1": "In the beginning there was just one single 2016. Then it became two 2016s, and then the two ",
-        "2": "In the beginning there was a tree. Now, there are 4000 trees. How many trees were there before the first tree was added",
-        "3": "In the beginning there was a single cube with side length 1. Then, a cube of side length 1/2 was formed. Then,",
-        "4": "In the beginning there was a single point. This is a common phrase used to symbolize the beginning of the universe. But in reality, there was",
-        "5": "In the beginning there was a single apple. Then, the apple was picked. Then, the apple was eaten. Then, the apple was cut into"
+        "1": "In the beginning there was only one cell, which we can call a cell A.  The cell A has a certain amount of energy.  This",
+        "2": "In the beginning there was just one atom. Then, it split into two atoms. Then, they split into more atoms. This process continued. This",
+        "3": "In the beginning there was a single dot, and then the first operation was to multiply by 2, then add 1, then multiply by ",
+        "4": "In the beginning there was nothing, and nothing was there. Then there was a single point. Then the point began to move, and the space of",
+        "5": "In the beginning there was 100000000000000000000000",
+        "6": "In the beginning there was a single fish. In the next 10 years, it had a growth rate of 100% per year",
+        "7": "In the beginning there was the one and only.  He was the first to come, the first to go.  He was the one who came",
+        "8": "In the beginning there was only one tree. After that, there were two trees. Then, three trees. Then, four, and so on.",
+        "9": "In the beginning there was only one atom, a single atom of a certain element. Then, through the process of nuclear fusion, the atom was transformed",
+        "10": "In the beginning there was one. Then came the ones who came after. Then the ones who came after that. And so on. I don't",
+        "11": "In the beginning there was a number. Then it was multiplied by 3, and then the product was divided by 6, then the result was",
+        "12": "In the beginning there was only one element, hydrogen. But as the universe cooled, it began to combine with other elements to form more complex molecules.",
+        "13": "In the beginning there was the empty set, and then the empty set was filled with the element 1. Then the element 1 was filled with",
+        "14": "In the beginning there was one square. Then, we did the following: the first person picked up a square and then created a square around it,",
+        "15": "In the beginning there was no one, but now there is. The first time I came here, it was the summer of 2008",
+        "16": "In the beginning there was only one idea: a simple, elegant, and clean design with minimal lines and an emphasis on natural textures and soft colors.",
+        "17": "In the beginning there was a single particle. Then, it split into two particles. Then, each of those two particles split into two more. Then",
+        "18": "In the beginning there was a single cell. It was a single cell, which was the first cell of the cell line. It was the first cell",
+        "19": "In the beginning there was a single dot. Then, the first step was to add the number 1 to it. The second step was to add",
+        "20": "In the beginning there was the idea of \"Matter\", which is the fundamental substance of the universe, which is a kind of energy. The matter"
       }
     },
     {
       "prompt": "The theory of relativity states that",
       "sequences": {
-        "1": "The theory of relativity states that the speed of light is constant in all inertial frames of reference, and that the speed of an object is always",
-        "2": "The theory of relativity states that the mass of an object increases as its speed approaches the speed of light. However, in the context of special rel",
-        "3": "The theory of relativity states that the energy of a moving object is given by the equation $E = \\gamma mc^2$, where $\\gamma",
-        "4": "The theory of relativity states that the speed of light is the same for all observers in inertial frames of reference. So, if two observers in",
-        "5": "The theory of relativity states that the speed of light is a constant in all inertial frames of reference, regardless of the motion of the source or"
+        "1": "The theory of relativity states that the speed of light in a vacuum is constant in all inertial frames of reference, and that the speed of light",
+        "2": "The theory of relativity states that the speed of light in a vacuum is constant, and the speed of light is the maximum possible speed. However,",
+        "3": "The theory of relativity states that the speed of light is constant in all inertial reference frames. However, in the special theory of relativity,",
+        "4": "The theory of relativity states that the total energy of a particle is given by the equation E = γmc², where γ is the Lorent",
+        "5": "The theory of relativity states that the speed of light is constant in all inertial frames of reference. But if an object moves faster than the speed",
+        "6": "The theory of relativity states that the speed of light is constant in all inertial reference frames, but this is only true in the case of an",
+        "7": "The theory of relativity states that mass and energy are equivalent and can be converted into each other. This is the foundation of nuclear energy. Which of",
+        "8": "The theory of relativity states that the time experienced by a moving observer is less than that experienced by a stationary observer. The formula for this is $",
+        "9": "The theory of relativity states that the speed of light is constant in all reference frames. However, the speed of light is not constant in a medium",
+        "10": "The theory of relativity states that the speed of light is the speed limit of the universe, and no object with mass can reach the speed of light",
+        "11": "The theory of relativity states that the speed of light in a vacuum is a constant. So, what is the speed of light in a medium with",
+        "12": "The theory of relativity states that the speed of light is constant in all inertial reference frames, and that the laws of physics are the same in",
+        "13": "The theory of relativity states that the speed of light in a vacuum is a constant, and it is the upper limit of speed for any object.",
+        "14": "The theory of relativity states that the mass of a body increases as its speed approaches the speed of light. How does this affect the total energy of",
+        "15": "The theory of relativity states that the speed of light is constant in all inertial frames of reference. But what if there is a frame of reference",
+        "16": "The theory of relativity states that the speed of light in a vacuum is constant, and it's a fundamental constant of nature. Is this correct?",
+        "17": "The theory of relativity states that the speed of light in a vacuum is the same for all observers in inertial frames of reference. This is a",
+        "18": "The theory of relativity states that mass is energy and energy is mass. The equation is E=mc². What is the mass of a particle",
+        "19": "The theory of relativity states that the energy of a moving object is given by the equation $E = \\gamma m c^2$, where $",
+        "20": "The theory of relativity states that the energy of a body is related to its mass, and that energy is conserved. How is this consistent with"
       }
     },
     {
       "prompt": "Photosynthesis is a process where",
       "sequences": {
-        "1": "Photosynthesis is a process where plants and some other organisms use sunlight to convert carbon dioxide and water into oxygen and glucose. The glucose is used by the",
-        "2": "Photosynthesis is a process where plants, algae and some bacteria convert light energy into chemical energy. It is the main source of energy for nearly all life",
-        "3": "Photosynthesis is a process where plants convert light energy into chemical energy, and this is crucial for the survival of all life on Earth. The process involves",
-        "4": "Photosynthesis is a process where plants and some other organisms convert carbon dioxide and water into glucose and oxygen. This process is vital for life on Earth,",
-        "5": "Photosynthesis is a process where plants use sunlight, water, and carbon dioxide to produce glucose and oxygen. The overall equation for photosynthesis is 6"
+        "1": "Photosynthesis is a process where plants, algae, and some bacteria use sunlight to convert water, carbon dioxide, and nutrients into oxygen and glucose. This",
+        "2": "Photosynthesis is a process where plants convert sunlight into energy, which is stored as chemical energy in the form of glucose. This process is essential for life",
+        "3": "Photosynthesis is a process where plants, algae, and some bacteria use sunlight to convert carbon dioxide into oxygen and glucose. The process involves several stages,",
+        "4": "Photosynthesis is a process where plants and some other organisms use sunlight to convert carbon dioxide and water into glucose and oxygen. The overall reaction is: ",
+        "5": "Photosynthesis is a process where plants and certain other organisms use sunlight to convert carbon dioxide and water into glucose and oxygen. This process is fundamental to life",
+        "6": "Photosynthesis is a process where plants use sunlight to convert water and carbon dioxide into glucose and oxygen. This process is essential for life on Earth as it",
+        "7": "Photosynthesis is a process where plants convert light energy into chemical energy. This process is crucial for the survival of all life forms on Earth. The chemical",
+        "8": "Photosynthesis is a process where plants convert sunlight, carbon dioxide, and water into glucose and oxygen. This process is crucial for the survival of all living",
+        "9": "Photosynthesis is a process where plants use sunlight to convert carbon dioxide and water into glucose and oxygen. This is a crucial process for the sustenance of",
+        "10": "Photosynthesis is a process where plants and some other organisms use sunlight to convert water and carbon dioxide into oxygen and glucose. The overall equation for photosynthesis",
+        "11": "Photosynthesis is a process where plants and some other organisms use sunlight to convert carbon dioxide and water into oxygen and glucose. The overall chemical equation for photos",
+        "12": "Photosynthesis is a process where plants and some other organisms use sunlight to convert water and carbon dioxide into oxygen and glucose. The overall equation for photosynthesis",
+        "13": "Photosynthesis is a process where plants and some other organisms use sunlight to convert carbon dioxide and water into glucose and oxygen. This process is essential for life",
+        "14": "Photosynthesis is a process where plants convert light energy into chemical energy, which is stored in the form of glucose. This process occurs in the chloroplast",
+        "15": "Photosynthesis is a process where plants and some other organisms use sunlight to convert carbon dioxide and water into glucose and oxygen. This process is crucial for life",
+        "16": "Photosynthesis is a process where plants use light energy to convert carbon dioxide and water into glucose and oxygen. This process is essential for life on Earth,",
+        "17": "Photosynthesis is a process where plants and other organisms use sunlight to convert carbon dioxide and water into oxygen and glucose. Plants need sunlight to make food and",
+        "18": "Photosynthesis is a process where plants use sunlight to convert water and carbon dioxide into glucose and oxygen. This process is essential for sustaining life on Earth,",
+        "19": "Photosynthesis is a process where plants, algae, and some bacteria use sunlight to convert carbon dioxide and water into glucose and oxygen. The overall equation for",
+        "20": "Photosynthesis is a process where plants and some other organisms use sunlight to convert carbon dioxide and water into glucose and oxygen. This process is vital for the"
       }
     },
     {
       "prompt": "Once upon a time in a distant land",
       "sequences": {
-        "1": "Once upon a time in a distant land, there is a big city with a lot of houses. The city has 100 houses. The",
-        "2": "Once upon a time in a distant land, there was a magical tree that grew the most amazing fruit. The tree was known for its ability to produce",
-        "3": "Once upon a time in a distant land, there was a castle with a very large number of trees. The trees were in a single row, and",
-        "4": "Once upon a time in a distant land, there is a castle. The castle has a number of rooms, each of which is a different type of",
-        "5": "Once upon a time in a distant land, there was a kingdom called \"The Kingdom of Mists\". The kingdom was known for its magical forest,"
+        "1": "Once upon a time in a distant land, a wise and just king decided to give a gift to his subjects. He chose a place in the forest",
+        "2": "Once upon a time in a distant land, there was a young girl named Lina who loved to play with her toys. One day, she found",
+        "3": "Once upon a time in a distant land, there was a young girl who loved to ride her bicycle. She was very eager to learn the art of",
+        "4": "Once upon a time in a distant land, there was a young boy named Max. Max lived in a house that was next to a river. Every",
+        "5": "Once upon a time in a distant land, there was a great and mighty kingdom where the people lived in harmony with nature and the land. In this",
+        "6": "Once upon a time in a distant land, there was a kingdom where the people believed that the sun and moon were two separate entities. In this kingdom",
+        "7": "Once upon a time in a distant land, there lived a young girl named Mia who was very curious and loved to explore the world around her. She",
+        "8": "Once upon a time in a distant land, there was a kingdom where all the citizens lived in harmony, and all the people were happy. The people",
+        "9": "Once upon a time in a distant land, there was a kingdom where the people lived in harmony with nature, and their lives revolved around the cycles",
+        "10": "Once upon a time in a distant land, there was a very rich and powerful kingdom.  The kingdom had a special kind of fruit that could make",
+        "11": "Once upon a time in a distant land, there lived a young man named Jack. Jack was a gifted and kind-hearted man who had a deep love",
+        "12": "Once upon a time in a distant land, there lived a young boy named Billy. He was very curious and always wanted to know why things happened the",
+        "13": "Once upon a time in a distant land, there was a city named Mathlandia, where the streets are arranged in a grid. The city has",
+        "14": "Once upon a time in a distant land, there was a forest where the trees stood tall and the air was filled with the scent of earth and green",
+        "15": "Once upon a time in a distant land, there was a group of friends who loved to play games. They had a special rule: they could only",
+        "16": "Once upon a time in a distant land, there was a king who had a garden. The garden was very large. The king loved to have people",
+        "17": "Once upon a time in a distant land, there was a village where the people loved to share their resources. The village was surrounded by a forest,",
+        "18": "Once upon a time in a distant land, there was a small village that was very special. This village was home to a unique type of tree,",
+        "19": "Once upon a time in a distant land, there was a young man named Peter who was known for his kindness and compassion. He lived in a small",
+        "20": "Once upon a time in a distant land, there lived a wise old man who had a magic tree in his garden. The tree was very special,"
       }
     }
   ]
