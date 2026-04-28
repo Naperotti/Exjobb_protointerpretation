@@ -1,7 +1,6 @@
 transformers
 torch
 numpy
-pandas
 umap-learn
 scikit-learn
 matplotlib
