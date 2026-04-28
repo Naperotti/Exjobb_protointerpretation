@@ -6,10 +6,10 @@ import torch
 from settings import EMBEDDING_INPUT_PATH, EMBEDDING_MODEL_NAME, EMBEDDING_OUTPUT_DIR
 
 # För 8B modellen
-# SELECTED_LAYERS = [26, 27, 29, 30, 31]
+SELECTED_LAYERS = [26, 27, 29, 30, 31]
 
 # För 1.7B modellen
-SELECTED_LAYERS = [19, 20, 21, 22, 23]
+#SELECTED_LAYERS = [19, 20, 21, 22, 23]
 
 
 def load_sequences(input_path):

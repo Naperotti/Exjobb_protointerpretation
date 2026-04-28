@@ -38,6 +38,16 @@ python -c "import torch; print(torch.cuda.is_available())"
 
 If this prints `True`, GPU is available.
 
+### 1.5 Add Hugging Face token (optional but recommended)
+This speeds up model downloads and gives access to private models.
+
+First, create a token at https://huggingface.co/settings/tokens
+
+On the remote machine, login with your token:
+
+```bash
+huggingface-cli login
+
 ## 2) Daily routine while developing
 
 ### 2.1 Edit code locally

@@ -1,8 +1,8 @@
 SETTINGS_NAME = "all_prompts_test"
 PROMPT_ID = "test_1"
 
-MODEL_NAME = "Qwen/Qwen3-1.7B"
-#models = ["gpt2", "Qwen/Qwen3-1.7B"]
+MODEL_NAME = "Qwen/Qwen3-8B"
+#models = ["gpt2", "Qwen/Qwen3-1.7B", "Qwen/Qwen3-8B"]
 MAX_LENGTH = 10
 TEMPERATURE = 0.7
 TOP_K = 50
