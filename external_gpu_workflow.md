@@ -52,7 +52,22 @@ git commit -m "update"
 git push
 ```
 
-### 2.3 Pull and run on remote GPU
+### 2.3 If you are using a feature branch
+Example: `data-structure-redesign`
+
+Push branch from local once:
+
+```bash
+git push -u origin data-structure-redesign
+```
+
+Then switch to the same branch on remote once:
+
+```bash
+ssh tony@100.121.67.110 "cd ~/Exjobb_protointerpretation && git fetch origin && git switch data-structure-redesign && git pull"
+```
+
+### 2.4 Pull and run on remote GPU
 Run from local machine (single command):
 
 ```bash
@@ -119,13 +134,13 @@ On your local machine, run one of these:
 PowerShell:
 
 ```powershell
-scp tony@100.121.67.110:~/Exjobb_protointerpretation/data/all_prompts_test.json "C:\Users\naper\OneDrive\Dokument\GitHub\Exjobb_protointerpretation\data\"
+scp tony@100.121.67.110:~/Exjobb_protointerpretation/data/all_prompts_test.npz "C:\Users\naper\OneDrive\Dokument\GitHub\Exjobb_protointerpretation\data\"
 ```
 
 Git Bash:
 
 ```bash
-scp tony@100.121.67.110:~/Exjobb_protointerpretation/data/all_prompts_test.json /c/Users/naper/OneDrive/Dokument/GitHub/Exjobb_protointerpretation/data/
+scp tony@100.121.67.110:~/Exjobb_protointerpretation/data/all_prompts_test.npz /c/Users/naper/OneDrive/Dokument/GitHub/Exjobb_protointerpretation/data/
 ```
 
 That will copy the remote file down to your local `data` folder and overwrite the old one.
