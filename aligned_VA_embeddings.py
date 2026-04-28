@@ -13,8 +13,21 @@ SELECTED_LAYERS = [19, 20, 21, 22, 23]
 
 
 def load_sequences(input_path):
-	with open(input_path, "r", encoding="utf-8") as f:
-		return json.load(f)
+	input_path = Path(input_path)
+	data = np.load(input_path, allow_pickle=False)
+
+	settings = json.loads(str(data["settings_json"]))
+	prompt_texts = data["prompt_texts"]
+	sequences = data["sequences"]
+
+	prompts = []
+	for i, prompt_text in enumerate(prompt_texts):
+		seq_dict = {}
+		for j in range(sequences.shape[1]):
+			seq_dict[str(j + 1)] = str(sequences[i, j])
+		prompts.append({"prompt": str(prompt_text), "sequences": seq_dict})
+
+	return {"settings": settings, "prompts": prompts}
 
 
 FUTURE_EOL_TEMPLATE = "Forecasting the subsequent tokens {sentence} in one word:"
@@ -75,6 +88,17 @@ def save_embeddings(embeddings, metadata, output_dir):
 	print(f"Saved embeddings {embeddings.shape} to {output_dir}")
 
 
+def print_saved_embedding_shapes(output_dir):
+	output_dir = Path(output_dir)
+	loaded_embeddings = np.load(output_dir / "aligned_va_embeddings.npy")
+	with open(output_dir / "aligned_va_metadata.json", "r", encoding="utf-8") as f:
+		loaded_metadata = json.load(f)
+
+	print("Embedding sanity check:")
+	print(f"- aligned_va_embeddings shape: {loaded_embeddings.shape}")
+	print(f"- metadata entries: {len(loaded_metadata)}")
+
+
 if __name__ == "__main__":
 	data = load_sequences(EMBEDDING_INPUT_PATH)
 
@@ -98,3 +122,4 @@ if __name__ == "__main__":
 
 	embeddings = extract_aligned_va_embeddings(texts, model_name, SELECTED_LAYERS)
 	save_embeddings(embeddings, metadata, EMBEDDING_OUTPUT_DIR)
+	print_saved_embedding_shapes(EMBEDDING_OUTPUT_DIR)

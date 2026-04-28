@@ -1,4 +1,5 @@
 import json
+import numpy as np
 from pathlib import Path
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from prompts import PROMPTS
@@ -42,24 +43,45 @@ def generate_sequences(model_name, prompts, max_length, temperature, top_k, top_
 
 
 def save_results(results, output_path):
-    output_data = {
-        "settings": {
-            "settings_name": SETTINGS_NAME,
-            "prompt_id": PROMPT_ID,
-            "model": MODEL_NAME,
-            "max_length": MAX_LENGTH,
-            "temperature": TEMPERATURE,
-            "top_k": TOP_K,
-            "top_p": TOP_P,
-            "num_return": NUM_RETURN,
-        },
-        "prompts": results,
+    settings_data = {
+        "settings_name": SETTINGS_NAME,
+        "prompt_id": PROMPT_ID,
+        "model": MODEL_NAME,
+        "max_length": MAX_LENGTH,
+        "temperature": TEMPERATURE,
+        "top_k": TOP_K,
+        "top_p": TOP_P,
+        "num_return": NUM_RETURN,
     }
+
+    prompt_texts = []
+    sequences_2d = []
+
+    for prompt_result in results:
+        prompt_texts.append(prompt_result["prompt"])
+        seqs = []
+        for i in range(len(prompt_result["sequences"])):
+            seqs.append(prompt_result["sequences"][str(i + 1)])
+        sequences_2d.append(seqs)
+
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(output_data, f, indent=2, ensure_ascii=False)
+
+    np.savez_compressed(
+        output_path,
+        settings_json=np.array(json.dumps(settings_data)),
+        prompt_texts=np.array(prompt_texts, dtype=str),
+        sequences=np.array(sequences_2d, dtype=str),
+    )
     print(f"Saved {len(results)} prompt groups to {output_path}")
+
+
+def print_npz_shapes(output_path):
+    data = np.load(output_path, allow_pickle=False)
+    print("NPZ sanity check:")
+    print(f"- settings_json shape: {data['settings_json'].shape}")
+    print(f"- prompt_texts shape: {data['prompt_texts'].shape}")
+    print(f"- sequences shape: {data['sequences'].shape}")
 
 
 if __name__ == "__main__":
@@ -73,3 +95,4 @@ if __name__ == "__main__":
         num_return=NUM_RETURN,
     )
     save_results(results, GENERATED_OUTPUT_PATH)
+    print_npz_shapes(GENERATED_OUTPUT_PATH)
