@@ -30,7 +30,7 @@ def load_sequences(input_path):
 	return {"settings": settings, "prompts": prompts}
 
 
-FUTURE_EOL_TEMPLATE = "Forecasting the subsequent tokens {sentence} in one word:"
+FUTURE_EOL_TEMPLATE = "Forecasting the subsequent tokens {sentence} in one word:" #Visade artikeln att PromptEOL är bättre?
 
 
 

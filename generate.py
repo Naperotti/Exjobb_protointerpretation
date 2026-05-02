@@ -22,6 +22,7 @@ def generate_sequences(model_name, prompts, max_length, temperature, top_k, top_
             outputs = model.generate(
                 **inputs,
                 max_length=max_length,
+                min_length=max_length,
                 temperature=temperature,
                 top_k=top_k,
                 top_p=top_p,
