@@ -21,8 +21,8 @@ def generate_sequences(model_name, prompts, max_length, temperature, top_k, top_
         with torch.no_grad():
             outputs = model.generate(
                 **inputs,
-                max_length=max_length,
-                min_length=max_length,
+                max_new_tokens=max_length,
+                min_new_tokens=max_length,
                 temperature=temperature,
                 top_k=top_k,
                 top_p=top_p,
