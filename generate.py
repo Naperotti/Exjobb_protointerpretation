@@ -34,9 +34,10 @@ def generate_sequences(model_name, prompts, max_length, temperature, top_k, top_
             "prompt": prompt["text"],
             "sequences": {},
         }
+        prompt_len = inputs["input_ids"].shape[1]
         for i, output in enumerate(outputs):
-            text = tokenizer.decode(output, skip_special_tokens=True)
-            prompt_result["sequences"][str(i + 1)] = text
+            generated_ids = output[prompt_len:].cpu().numpy()
+            prompt_result["sequences"][str(i + 1)] = generated_ids
         results.append(prompt_result)
         print(f"Generated {num_return} sequence(s) for prompt '{prompt['id']}'")
 
@@ -72,7 +73,7 @@ def save_results(results, output_path):
         output_path,
         settings_json=np.array(json.dumps(settings_data)),
         prompt_texts=np.array(prompt_texts, dtype=str),
-        sequences=np.array(sequences_2d, dtype=str),
+        sequences=np.array(sequences_2d, dtype=np.int64),
     )
     print(f"Saved {len(results)} prompt groups to {output_path}")
 

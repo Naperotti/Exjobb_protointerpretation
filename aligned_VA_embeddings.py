@@ -6,10 +6,10 @@ import torch
 from settings import EMBEDDING_INPUT_PATH, EMBEDDING_MODEL_NAME, EMBEDDING_OUTPUT_DIR
 
 # För 8B modellen
-SELECTED_LAYERS = [26, 27, 29, 30, 31]
+# SELECTED_LAYERS = [26, 27, 29, 30, 31]
 
 # För 1.7B modellen
-#SELECTED_LAYERS = [19, 20, 21, 22, 23]
+SELECTED_LAYERS = [19, 20, 21, 22, 23]
 
 
 def load_sequences(input_path):
@@ -24,7 +24,7 @@ def load_sequences(input_path):
 	for i, prompt_text in enumerate(prompt_texts):
 		seq_dict = {}
 		for j in range(sequences.shape[1]):
-			seq_dict[str(j + 1)] = str(sequences[i, j])
+			seq_dict[str(j + 1)] = sequences[i, j]  # numpy int64 array of token IDs
 		prompts.append({"prompt": str(prompt_text), "sequences": seq_dict})
 
 	return {"settings": settings, "prompts": prompts}
@@ -34,49 +34,42 @@ FUTURE_EOL_TEMPLATE = "Forecasting the subsequent tokens {sentence} in one word:
 
 
 
-def extract_aligned_va_embeddings(texts, model_name, selected_layers):
+def setup_model_and_hooks(model_name, selected_layers):
 	tokenizer = AutoTokenizer.from_pretrained(model_name)
 	model = AutoModelForCausalLM.from_pretrained(model_name)
 	model.eval()
 
 	layers = model.model.layers
-
-	layer_last_token_outputs = {layer_index: None for layer_index in selected_layers}
+	layer_outputs = {layer_index: None for layer_index in selected_layers}
 	hooks = []
 
 	def make_hook(layer_index):
 		def hook(_module, _inputs, output):
 			attention_output = output[0] if isinstance(output, tuple) else output
-			layer_last_token_outputs[layer_index] = attention_output[:, -1, :].detach()
-
+			layer_outputs[layer_index] = attention_output[:, -1, :].detach()
 		return hook
 
 	for layer_index in selected_layers:
 		hooks.append(layers[layer_index].self_attn.register_forward_hook(make_hook(layer_index)))
 
-	embeddings = []
-	for i, text in enumerate(texts):
-		prompted_text = FUTURE_EOL_TEMPLATE.format(sentence=text) # use FUTURE_EOL_TEMPLATE to create a prompt that encourages the model to focus on the last token
-		inputs = tokenizer(prompted_text, return_tensors="pt", truncation=True, max_length=512)
+	return tokenizer, model, layer_outputs, hooks
 
-		for layer_index in selected_layers:
-			layer_last_token_outputs[layer_index] = None
 
-		with torch.no_grad():
-			_ = model(**inputs, use_cache=False)
+def extract_token_embedding(model, layer_outputs, selected_layers, prefix_ids, sentence_ids_prefix, suffix_ids):
+	current_ids = prefix_ids + sentence_ids_prefix + suffix_ids
+	input_ids = torch.tensor([current_ids], dtype=torch.long)
 
-		stacked_layer_outputs = torch.stack(
-			[layer_last_token_outputs[layer_index].squeeze(0) for layer_index in selected_layers],
-			dim=0,
-		)
-		sentence_embedding = stacked_layer_outputs.mean(dim=0).float().cpu().numpy()
-		embeddings.append(sentence_embedding)
-		print(f"Extracted aligned VA embedding for sequence {i + 1}/{len(texts)}")
+	for layer_index in selected_layers:
+		layer_outputs[layer_index] = None
 
-	for hook in hooks:
-		hook.remove()
+	with torch.no_grad():
+		_ = model(input_ids=input_ids, use_cache=False)
 
-	return np.array(embeddings)
+	stacked = torch.stack(
+		[layer_outputs[layer_index].squeeze(0) for layer_index in selected_layers],
+		dim=0,
+	)
+	return stacked.mean(dim=0).float().cpu().numpy()
 
 
 def save_embeddings(embeddings, metadata, output_dir):
@@ -105,13 +98,19 @@ if __name__ == "__main__":
 	model_name = EMBEDDING_MODEL_NAME or data["settings"]["model"]
 	prompt_groups = data["prompts"]
 
-	texts = []
-	metadata = []
+	# Tokenize template prefix and suffix once
+	prefix_text, suffix_text = FUTURE_EOL_TEMPLATE.split("{sentence}")
+	tokenizer, model, layer_outputs, hooks = setup_model_and_hooks(model_name, SELECTED_LAYERS)
+	prefix_ids = tokenizer(prefix_text, add_special_tokens=False)["input_ids"]
+	suffix_ids = tokenizer(suffix_text, add_special_tokens=False)["input_ids"]
 
+	# Collect all sentences and metadata
+	all_sentence_ids = []
+	metadata = []
 	for prompt_group in prompt_groups:
 		prompt_text = prompt_group["prompt"]
-		for sequence_index, generated_text in prompt_group["sequences"].items():
-			texts.append(generated_text)
+		for sequence_index, sentence_token_ids in prompt_group["sequences"].items():
+			all_sentence_ids.append(sentence_token_ids)
 			metadata.append(
 				{
 					"prompt_text": prompt_text,
@@ -120,6 +119,21 @@ if __name__ == "__main__":
 				}
 			)
 
-	embeddings = extract_aligned_va_embeddings(texts, model_name, SELECTED_LAYERS)
+	num_sentences = len(all_sentence_ids)
+	num_tokens = len(all_sentence_ids[0])
+	hidden_dim = model.config.hidden_size
+	embeddings = np.zeros([num_sentences, num_tokens, hidden_dim], dtype=np.float32)
+
+	for sentence_idx, sentence_ids in enumerate(all_sentence_ids):
+		for n in range(1, num_tokens + 1):
+			embeddings[sentence_idx, n - 1] = extract_token_embedding(
+				model, layer_outputs, SELECTED_LAYERS,
+				prefix_ids, sentence_ids[:n].tolist(), suffix_ids,
+			)
+		print(f"Extracted embeddings for sentence {sentence_idx + 1}/{num_sentences}")
+
+	for hook in hooks:
+		hook.remove()
+
 	save_embeddings(embeddings, metadata, EMBEDDING_OUTPUT_DIR)
 	print_saved_embedding_shapes(EMBEDDING_OUTPUT_DIR)
