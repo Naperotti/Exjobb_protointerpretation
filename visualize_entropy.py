@@ -12,23 +12,16 @@ prompt_texts = data["prompt_texts"]
 num_prompts, num_return, max_length = entropies.shape
 token_positions = range(1, max_length + 1)
 
-fig, axes = plt.subplots(num_prompts, 1, figsize=(10, 3 * num_prompts), sharex=True)
-if num_prompts == 1:
-    axes = [axes]
+fig, ax = plt.subplots(figsize=(10, 5))
 
-for p, ax in enumerate(axes):
-    for s in range(num_return):
-        ax.plot(token_positions, entropies[p, s], alpha=0.6, label=f"seq {s + 1}")
+for p in range(num_prompts):
+    # Mean entropy across sequences for this prompt: [max_length]
+    mean_ent = entropies[p].mean(axis=0)
+    ax.plot(token_positions, mean_ent, label=f'"{prompt_texts[p]}"')
 
-    # Mean entropy across sequences for this prompt
-    mean_ent = entropies[p].mean(axis=0)  # [max_length]
-    ax.plot(token_positions, mean_ent, color="black", linewidth=2, label="mean")
-
-    ax.set_title(f'"{prompt_texts[p]}"', fontsize=9)
-    ax.set_ylabel("Entropy (nats)")
-    ax.legend(fontsize=8)
-
-axes[-1].set_xlabel("Token position")
-plt.suptitle("Per-token entropy during generation", fontsize=12)
+ax.set_xlabel("Token position")
+ax.set_ylabel("Entropy (nats)")
+ax.set_title("Mean per-token entropy during generation")
+ax.legend(fontsize=8)
 plt.tight_layout()
 plt.show()
