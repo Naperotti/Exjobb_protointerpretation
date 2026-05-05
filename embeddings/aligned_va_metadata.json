@@ -1,52 +1,62 @@
 [
   {
-    "prompt_text": "The meaning of life is",
+    "prompt_text": "A bat is",
     "sequence_index": 1,
-    "model_name": "Qwen/Qwen3-1.7B"
+    "model_name": "Qwen/Qwen3-8B"
   },
   {
-    "prompt_text": "The meaning of life is",
+    "prompt_text": "A bat is",
     "sequence_index": 2,
-    "model_name": "Qwen/Qwen3-1.7B"
+    "model_name": "Qwen/Qwen3-8B"
   },
   {
-    "prompt_text": "In the beginning there was",
+    "prompt_text": "A bat is",
+    "sequence_index": 3,
+    "model_name": "Qwen/Qwen3-8B"
+  },
+  {
+    "prompt_text": "A pencil is",
     "sequence_index": 1,
-    "model_name": "Qwen/Qwen3-1.7B"
+    "model_name": "Qwen/Qwen3-8B"
   },
   {
-    "prompt_text": "In the beginning there was",
+    "prompt_text": "A pencil is",
     "sequence_index": 2,
-    "model_name": "Qwen/Qwen3-1.7B"
+    "model_name": "Qwen/Qwen3-8B"
   },
   {
-    "prompt_text": "The theory of relativity states that",
+    "prompt_text": "A pencil is",
+    "sequence_index": 3,
+    "model_name": "Qwen/Qwen3-8B"
+  },
+  {
+    "prompt_text": "The declaration of independence formally",
     "sequence_index": 1,
-    "model_name": "Qwen/Qwen3-1.7B"
+    "model_name": "Qwen/Qwen3-8B"
   },
   {
-    "prompt_text": "The theory of relativity states that",
+    "prompt_text": "The declaration of independence formally",
     "sequence_index": 2,
-    "model_name": "Qwen/Qwen3-1.7B"
+    "model_name": "Qwen/Qwen3-8B"
   },
   {
-    "prompt_text": "Photosynthesis is a process where",
+    "prompt_text": "The declaration of independence formally",
+    "sequence_index": 3,
+    "model_name": "Qwen/Qwen3-8B"
+  },
+  {
+    "prompt_text": "Something happens when there exists a",
     "sequence_index": 1,
-    "model_name": "Qwen/Qwen3-1.7B"
+    "model_name": "Qwen/Qwen3-8B"
   },
   {
-    "prompt_text": "Photosynthesis is a process where",
+    "prompt_text": "Something happens when there exists a",
     "sequence_index": 2,
-    "model_name": "Qwen/Qwen3-1.7B"
+    "model_name": "Qwen/Qwen3-8B"
   },
   {
-    "prompt_text": "Once upon a time in a distant land",
-    "sequence_index": 1,
-    "model_name": "Qwen/Qwen3-1.7B"
-  },
-  {
-    "prompt_text": "Once upon a time in a distant land",
-    "sequence_index": 2,
-    "model_name": "Qwen/Qwen3-1.7B"
+    "prompt_text": "Something happens when there exists a",
+    "sequence_index": 3,
+    "model_name": "Qwen/Qwen3-8B"
   }
 ]
