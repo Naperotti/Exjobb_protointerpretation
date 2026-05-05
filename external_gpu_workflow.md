@@ -43,10 +43,11 @@ This speeds up model downloads and gives access to private models.
 
 First, create a token at https://huggingface.co/settings/tokens
 
-On the remote machine, login with your token:
+On the remote machine, activate venv and login:
 
 ```bash
-huggingface-cli login
+source ~/venv/bin/activate
+hf login
 
 ## 2) Daily routine while developing
 
@@ -90,6 +91,12 @@ For embeddings script instead:
 ssh tony@100.121.67.110 "cd ~/Exjobb_protointerpretation && source ~/venv/bin/activate && git pull && python aligned_VA_embeddings.py"
 ```
 
+For UMAP precomputation (run after embeddings):
+
+```bash
+ssh tony@100.121.67.110 "cd ~/Exjobb_protointerpretation && source ~/venv/bin/activate && python precompute_umap.py"
+```
+
 ## 3) When to run commands locally vs remotely
 
 - Local machine: `git add`, `git commit`, `git push`.
@@ -104,7 +111,13 @@ Quick rule:
 Start background run from local machine:
 
 ```bash
-ssh tony@100.121.67.110 "cd ~/Exjobb_protointerpretation && source ~/venv/bin/activate && nohup python aligned_VA_embeddings.py > run.log 2>&1 &"
+ssh tony@100.121.67.110 "cd ~/Exjobb_protointerpretation && source ~/venv/bin/activate && nohup python generate.py > run.log 2>&1 &"
+```
+
+For embeddings + UMAP precomputation chained:
+
+```bash
+ssh tony@100.121.67.110 "cd ~/Exjobb_protointerpretation && source ~/venv/bin/activate && nohup bash -c 'python aligned_VA_embeddings.py && python precompute_umap.py' > run.log 2>&1 &"
 ```
 
 Check logs:
@@ -141,16 +154,23 @@ exit
 
 On your local machine, run one of these:
 
-PowerShell:
+### Download generated sequences (.npz)
 
 ```powershell
-scp tony@100.121.67.110:~/Exjobb_protointerpretation/data/all_prompts_test.npz "C:\Users\naper\OneDrive\Dokument\GitHub\Exjobb_protointerpretation\data\"
+scp tony@100.121.67.110:~/Exjobb_protointerpretation/data/all_prompts_32_tokens.npz "C:\Users\naper\OneDrive\Dokument\GitHub\Exjobb_protointerpretation\data\"
 ```
 
-Git Bash:
+### Download UMAP precomputed data (for local visualization)
 
-```bash
-scp tony@100.121.67.110:~/Exjobb_protointerpretation/data/all_prompts_test.npz /c/Users/naper/OneDrive/Dokument/GitHub/Exjobb_protointerpretation/data/
+```powershell
+scp tony@100.121.67.110:~/Exjobb_protointerpretation/embeddings/umap_projections.npy "C:\Users\naper\OneDrive\Dokument\GitHub\Exjobb_protointerpretation\embeddings\"
+scp tony@100.121.67.110:~/Exjobb_protointerpretation/embeddings/umap_ari_scores.npy "C:\Users\naper\OneDrive\Dokument\GitHub\Exjobb_protointerpretation\embeddings\"
+scp tony@100.121.67.110:~/Exjobb_protointerpretation/embeddings/aligned_va_metadata.json "C:\Users\naper\OneDrive\Dokument\GitHub\Exjobb_protointerpretation\embeddings\"
 ```
 
-That will copy the remote file down to your local `data` folder and overwrite the old one.
+Then visualize locally:
+
+```powershell
+python visualize_umap_local.py
+python visualize_entropy.py
+```

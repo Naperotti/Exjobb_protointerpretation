@@ -8,10 +8,10 @@ from settings import EMBEDDING_INPUT_PATH, EMBEDDING_MODEL_NAME, EMBEDDING_OUTPU
 # Which transformer layers to extract hidden states from and average together.
 # Chosen empirically for each model size — later layers carry more semantic content.
 # För 8B modellen
-# SELECTED_LAYERS = [26, 27, 29, 30, 31]
+SELECTED_LAYERS = [26, 27, 29, 30, 31]
 
 # För 1.7B modellen
-SELECTED_LAYERS = [19, 20, 21, 22, 23]
+#SELECTED_LAYERS = [19, 20, 21, 22, 23]
 
 
 # Loads generated token sequences from the .npz produced by generate.py.
