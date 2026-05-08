@@ -10,8 +10,11 @@ from settings import SETTINGS_NAME, PROMPT_ID, MODEL_NAME, MAX_LENGTH, TEMPERATU
 # Generates token sequences and per-token entropy for each prompt.
 # Returns a list of dicts with keys: "prompt", "sequences", "entropies".
 def generate_sequences(model_name, prompts, max_length, temperature, top_k, top_p, num_return):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Using device: {device}", flush=True)
+
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForCausalLM.from_pretrained(model_name)
+    model = AutoModelForCausalLM.from_pretrained(model_name).to(device)
     model.eval()
 
     if tokenizer.pad_token is None:
@@ -21,6 +24,7 @@ def generate_sequences(model_name, prompts, max_length, temperature, top_k, top_
     for prompt in prompts:
         # inputs["input_ids"]: int64 tensor, shape [1, prompt_len]
         inputs = tokenizer(prompt["text"], return_tensors="pt")
+        inputs = {k: v.to(device) for k, v in inputs.items()}
         with torch.no_grad():
             # outputs.sequences: int64 tensor, shape [num_return, prompt_len + max_length]
             # outputs.scores: tuple of max_length tensors, each shape [num_return, vocab_size]

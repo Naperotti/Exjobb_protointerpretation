@@ -46,8 +46,11 @@ FUTURE_EOL_TEMPLATE = "Forecasting the subsequent tokens {sentence} in one word:
 # each selected layer. Hooks capture the last-token hidden state on every forward pass.
 # Returns tokenizer, model, layer_outputs dict (filled by hooks), and hook handles.
 def setup_model_and_hooks(model_name, selected_layers):
+	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+	print(f"Using device: {device}", flush=True)
+
 	tokenizer = AutoTokenizer.from_pretrained(model_name)
-	model = AutoModelForCausalLM.from_pretrained(model_name)
+	model = AutoModelForCausalLM.from_pretrained(model_name).to(device)
 	model.eval()
 
 	layers = model.model.layers
@@ -65,7 +68,7 @@ def setup_model_and_hooks(model_name, selected_layers):
 	for layer_index in selected_layers:
 		hooks.append(layers[layer_index].self_attn.register_forward_hook(make_hook(layer_index)))
 
-	return tokenizer, model, layer_outputs, hooks
+	return tokenizer, model, layer_outputs, hooks, device
 
 
 # Extracts a single embedding vector for a sentence prefix of length n.
@@ -73,10 +76,10 @@ def setup_model_and_hooks(model_name, selected_layers):
 # Runs one forward pass, reads the last-token hidden state from each selected layer,
 # then mean-pools across layers.
 # Returns: float32 numpy array, shape [hidden_dim]
-def extract_token_embedding(model, layer_outputs, selected_layers, prefix_ids, sentence_ids_prefix, suffix_ids):
+def extract_token_embedding(model, layer_outputs, selected_layers, prefix_ids, sentence_ids_prefix, suffix_ids, device):
 	current_ids = prefix_ids + sentence_ids_prefix + suffix_ids
 	# input_ids: [1, total_len], int64
-	input_ids = torch.tensor([current_ids], dtype=torch.long)
+	input_ids = torch.tensor([current_ids], dtype=torch.long, device=device)
 
 	for layer_index in selected_layers:
 		layer_outputs[layer_index] = None
@@ -125,7 +128,7 @@ if __name__ == "__main__":
 
 	# Split template into prefix/suffix around {sentence} placeholder, tokenize once
 	prefix_text, suffix_text = FUTURE_EOL_TEMPLATE.split("{sentence}")
-	tokenizer, model, layer_outputs, hooks = setup_model_and_hooks(model_name, SELECTED_LAYERS)
+	tokenizer, model, layer_outputs, hooks, device = setup_model_and_hooks(model_name, SELECTED_LAYERS)
 	# prefix_ids / suffix_ids: list of int token IDs (no special tokens added)
 	prefix_ids = tokenizer(prefix_text, add_special_tokens=False)["input_ids"]
 	suffix_ids = tokenizer(suffix_text, add_special_tokens=False)["input_ids"]
@@ -157,7 +160,7 @@ if __name__ == "__main__":
 			# Pass the first n tokens of the sentence as the sentence prefix
 			embeddings[sentence_idx, n - 1] = extract_token_embedding(
 				model, layer_outputs, SELECTED_LAYERS,
-				prefix_ids, sentence_ids[:n].tolist(), suffix_ids,
+				prefix_ids, sentence_ids[:n].tolist(), suffix_ids, device,
 			)
 		print(f"Extracted embeddings for sentence {sentence_idx + 1}/{num_sentences}")
 
