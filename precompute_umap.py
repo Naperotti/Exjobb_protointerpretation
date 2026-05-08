@@ -4,14 +4,14 @@ import umap
 from sklearn.cluster import KMeans
 from sklearn.metrics import adjusted_rand_score
 from pathlib import Path
-from settings import EMBEDDING_OUTPUT_DIR
+from settings import EMBEDDING_OUTPUT_DIR, EMBEDDING_ARRAY_FILENAME, EMBEDDING_METADATA_FILENAME
 
 output_dir = Path(EMBEDDING_OUTPUT_DIR)
 
 # Load embeddings and metadata
 # embeddings: [num_sentences, num_tokens, hidden_dim], float32
-embeddings = np.load(output_dir / "aligned_va_embeddings.npy")
-with open(output_dir / "aligned_va_metadata.json", "r", encoding="utf-8") as f:
+embeddings = np.load(output_dir / EMBEDDING_ARRAY_FILENAME)
+with open(output_dir / EMBEDDING_METADATA_FILENAME, "r", encoding="utf-8") as f:
     metadata = json.load(f)
 
 num_sentences, num_tokens, hidden_dim = embeddings.shape

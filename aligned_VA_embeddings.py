@@ -3,7 +3,13 @@ import numpy as np
 from pathlib import Path
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
-from settings import EMBEDDING_INPUT_PATH, EMBEDDING_MODEL_NAME, EMBEDDING_OUTPUT_DIR
+from settings import (
+	EMBEDDING_INPUT_PATH,
+	EMBEDDING_MODEL_NAME,
+	EMBEDDING_OUTPUT_DIR,
+	EMBEDDING_ARRAY_FILENAME,
+	EMBEDDING_METADATA_FILENAME,
+)
 
 # Which transformer layers to extract hidden states from and average together.
 # Chosen empirically for each model size — later layers carry more semantic content.
@@ -102,8 +108,8 @@ def extract_token_embedding(model, layer_outputs, selected_layers, prefix_ids, s
 def save_embeddings(embeddings, metadata, output_dir):
 	output_dir = Path(output_dir)
 	output_dir.mkdir(parents=True, exist_ok=True)
-	np.save(output_dir / "aligned_va_embeddings.npy", embeddings)
-	with open(output_dir / "aligned_va_metadata.json", "w", encoding="utf-8") as f:
+	np.save(output_dir / EMBEDDING_ARRAY_FILENAME, embeddings)
+	with open(output_dir / EMBEDDING_METADATA_FILENAME, "w", encoding="utf-8") as f:
 		json.dump(metadata, f, indent=2, ensure_ascii=False)
 	print(f"Saved embeddings {embeddings.shape} to {output_dir}")
 
@@ -111,8 +117,8 @@ def save_embeddings(embeddings, metadata, output_dir):
 # Reloads saved files and prints shapes as a quick sanity check.
 def print_saved_embedding_shapes(output_dir):
 	output_dir = Path(output_dir)
-	loaded_embeddings = np.load(output_dir / "aligned_va_embeddings.npy")
-	with open(output_dir / "aligned_va_metadata.json", "r", encoding="utf-8") as f:
+	loaded_embeddings = np.load(output_dir / EMBEDDING_ARRAY_FILENAME)
+	with open(output_dir / EMBEDDING_METADATA_FILENAME, "r", encoding="utf-8") as f:
 		loaded_metadata = json.load(f)
 
 	print("Embedding sanity check:")
