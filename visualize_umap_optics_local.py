@@ -2,198 +2,75 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
-from sklearn.cluster import OPTICS
 from matplotlib.lines import Line2D
 from pathlib import Path
-from settings import EMBEDDING_OUTPUT_DIR, GENERATED_OUTPUT_PATH
+from settings import EMBEDDING_OUTPUT_DIR, GENERATED_OUTPUT_PATH, EMBEDDING_METADATA_FILENAME
 
-# Load precomputed UMAP projections from precompute_umap.py
-# projections: [num_tokens, num_sentences, 2]
 output_dir = Path(EMBEDDING_OUTPUT_DIR)
-projections = np.load(output_dir / "umap_projections.npy")
-num_tokens = projections.shape[0]
-with open(output_dir / "aligned_va_metadata.json", "r", encoding="utf-8") as f:
-    metadata = json.load(f)
 
+# --- Load all precomputed data from precompute_umap.py ---
+
+# projections: [num_tokens, n_prompts, num_return_per_prompt, 2], float32
+projections = np.load(output_dir / "umap_projections.npy")
+num_tokens, n_prompts, num_return_per_prompt, _ = projections.shape
+
+# optics_labels:       [num_tokens, n_prompts, num_return_per_prompt], int32
+# optics_reachability: [num_tokens, n_prompts, num_return_per_prompt], float32 (ordered, inf->1.0)
+# optics_orderings:    [num_tokens, n_prompts, num_return_per_prompt], int64
+optics_labels       = np.load(output_dir / "optics_labels.npy")
+optics_reachability = np.load(output_dir / "optics_reachability.npy")
+optics_orderings    = np.load(output_dir / "optics_orderings.npy")
+
+# optics_metrics keys — each shape [num_tokens, n_prompts]
+optics_metrics = np.load(output_dir / "optics_metrics.npz")
+metrics_cluster_counts   = optics_metrics["cluster_counts"]    # int32
+metrics_noise_counts     = optics_metrics["noise_counts"]      # int32
+metrics_core_counts      = optics_metrics["core_counts"]       # int32
+metrics_border_counts    = optics_metrics["border_counts"]     # int32
+metrics_core_homogeneity = optics_metrics["core_homogeneity"]  # float32
+
+# metadata: list of dicts with prompt_text, sequence_index
+with open(output_dir / EMBEDDING_METADATA_FILENAME, "r", encoding="utf-8") as f:
+    metadata = json.load(f)
 prompt_texts = [m["prompt_text"] for m in metadata]
 unique_prompts = list(dict.fromkeys(prompt_texts))
-prompt_ids = np.array([unique_prompts.index(p) for p in prompt_texts])
-n_prompts = len(unique_prompts)
 
-# Load entropy curve for bottom panel.
+# entropies: [num_prompts, num_return, max_length], float32 — averaged over returns for bottom panel
 entropy_data = np.load(GENERATED_OUTPUT_PATH, allow_pickle=False)
-# entropies: [num_prompts, num_return, max_length]
 entropy_prompt_texts = [str(p) for p in entropy_data["prompt_texts"]]
-entropy_by_prompt = entropy_data["entropies"].mean(axis=1)
+entropy_by_prompt = entropy_data["entropies"].mean(axis=1)   # [num_prompts, max_length]
 entropy_tokens = np.arange(1, entropy_by_prompt.shape[1] + 1)
 
-# OPTICS settings
-MIN_SAMPLES = 10
-MAX_EPS = 1
-XI = 0.5
-METRIC = "euclidean"
+# --- Derive display arrays at load time (pure numpy, no sklearn) ---
 
+# flat_projections[t]: [num_sentences, 2] — all prompts concatenated for single scatter
+# flat_prompt_ids:     [num_sentences]    — prompt index per point, same order as flat_projections
+flat_projections = np.concatenate([projections[:, p, :, :] for p in range(n_prompts)], axis=1)
+# flat_projections: [num_tokens, num_sentences, 2]
+flat_prompt_ids = np.concatenate([np.full(num_return_per_prompt, p) for p in range(n_prompts)])
+# flat_prompt_ids: [num_sentences]
 
-def fit_optics(umap_data):
-    model = OPTICS(
-        min_samples=MIN_SAMPLES,
-        max_eps=MAX_EPS,
-        metric=METRIC,
-        cluster_method="xi",
-        xi=XI,
-    )
-    labels = model.fit_predict(umap_data)
-    ordering = model.ordering_
-    reachability_raw = model.reachability_
-    core_distances = model.core_distances_
-    reachability_ordered = reachability_raw[ordering]
-
-    core_mask = np.isfinite(core_distances)
-    border_mask = (~core_mask) & np.isfinite(reachability_raw)
-    noise_mask = (~core_mask) & (~np.isfinite(reachability_raw))
-
-    core_count = int(core_mask.sum())
-    border_count = int(border_mask.sum())
-    noise_count = int(noise_mask.sum())
-    sample_count = int(len(labels))
-    core_homogeneity = core_count / sample_count if sample_count > 0 else 0.0
-
-    return {
-        "labels": labels,
-        "ordering": ordering,
-        "reachability_ordered": reachability_ordered,
-        "core_mask": core_mask,
-        "noise_mask": noise_mask,
-        "core_count": core_count,
-        "border_count": border_count,
-        "noise_count": noise_count,
-        "sample_count": sample_count,
-        "core_homogeneity": core_homogeneity,
-    }
-
-
-print(f"Precomputing OPTICS for {num_tokens} token positions...")
-all_labels = []
-all_reachability = []
-all_orderings = []
-all_ordered_prompt_ids = []
-all_ordered_colors = []
-cmap = plt.cm.get_cmap("tab10", n_prompts)
-prompt_colors = [cmap(p / max(n_prompts - 1, 1)) for p in range(n_prompts)]
-all_core_counts = []
-all_border_counts = []
-all_noise_counts = []
-all_core_homogeneity = []
-all_prompt_reachability = []
-all_cluster_counts = []
-all_noise_label_counts = []
-all_prompt_core_counts = []
-all_prompt_border_counts = []
-all_prompt_noise_counts = []
-all_prompt_homogeneity = []
-all_prompt_cluster_counts = []
-
-for t in range(num_tokens):
-    optics = fit_optics(projections[t])
-
-    labels = optics["labels"]
-    ordering = optics["ordering"]
-    reachability = optics["reachability_ordered"]
-    reachability_finite_one = np.where(np.isfinite(reachability), reachability, 1.0)
-
-    all_labels.append(labels)
-    all_reachability.append(reachability_finite_one)
-    all_orderings.append(ordering)
-
-    ordered_prompt_ids = prompt_ids[ordering]
-    all_ordered_prompt_ids.append(ordered_prompt_ids)
-    all_ordered_colors.append(cmap(ordered_prompt_ids.astype(float)))
-
-    all_core_counts.append(optics["core_count"])
-    all_border_counts.append(optics["border_count"])
-    all_noise_counts.append(optics["noise_count"])
-    all_core_homogeneity.append(optics["core_homogeneity"])
-
-    core_mask_t = optics["core_mask"]
-    noise_mask_t = optics["noise_mask"]
-    border_mask_t = (~core_mask_t) & (~noise_mask_t)
-
-    # Assign each non-noise cluster to exactly one prompt (majority membership)
-    # so clusters are not double counted across prompt tables.
-    assigned_cluster_counts = [0] * n_prompts
-    for cluster_id in np.unique(labels[labels >= 0]):
-        cluster_mask = labels == cluster_id
-        votes = np.bincount(prompt_ids[cluster_mask], minlength=n_prompts)
-        owner_prompt = int(np.argmax(votes))
-        assigned_cluster_counts[owner_prompt] += 1
-
-    prompt_core_counts = []
-    prompt_border_counts = []
-    prompt_noise_counts = []
-    prompt_homogeneity = []
-    prompt_cluster_counts = []
-    for p in range(n_prompts):
-        pm = (prompt_ids == p)
-        pc = int((core_mask_t & pm).sum())
-        pb = int((border_mask_t & pm).sum())
-        pn = int((noise_mask_t & pm).sum())
-        pt = max(pc + pb + pn, 1)
-        prompt_core_counts.append(pc)
-        prompt_border_counts.append(pb)
-        prompt_noise_counts.append(pn)
-        prompt_homogeneity.append(pc / pt)
-        prompt_cluster_counts.append(assigned_cluster_counts[p])
-    all_prompt_core_counts.append(prompt_core_counts)
-    all_prompt_border_counts.append(prompt_border_counts)
-    all_prompt_noise_counts.append(prompt_noise_counts)
-    all_prompt_homogeneity.append(prompt_homogeneity)
-    all_prompt_cluster_counts.append(prompt_cluster_counts)
-
-    prompt_reachability = []
-    for p in range(n_prompts):
-        prompt_vals = reachability_finite_one[ordered_prompt_ids == p]
-        prompt_reachability.append(prompt_vals)
-    all_prompt_reachability.append(prompt_reachability)
-
-    all_cluster_counts.append(len(set(labels[labels >= 0])))
-    all_noise_label_counts.append(int(np.sum(labels == -1)))
-    print(f"  Token {t + 1}/{num_tokens} done")
-
-
+# scaled_reachability[t, p]: [num_return_per_prompt] — log1p of ordered reachability
 def scale_reachability_for_plot(vals):
     return np.log1p(vals)
 
-# Save derived dataset: reachability with inf values replaced by 1.
-reachability_dataset = np.array(all_reachability, dtype=np.float32)
-reachability_output_path = output_dir / "optics_reachability_inf_as_one.npy"
-np.save(reachability_output_path, reachability_dataset)
-print(f"Saved reachability dataset to {reachability_output_path}")
+scaled_reachability = scale_reachability_for_plot(optics_reachability)
+# scaled_reachability: [num_tokens, n_prompts, num_return_per_prompt], float32
 
-# Initial state (token position 1)
-initial_proj = projections[0]
-initial_labels = all_labels[0]
-initial_reachability = all_reachability[0]
-initial_ordered_prompt_ids = all_ordered_prompt_ids[0]
-
-# Global fixed axis limits for smooth token-to-token comparison.
-global_x_min = projections[:, :, 0].min()
-global_x_max = projections[:, :, 0].max()
-global_y_min = projections[:, :, 1].min()
-global_y_max = projections[:, :, 1].max()
-pad = 0.5
-
-# Keep reachability scale fixed across tokens.
-global_reach_max = np.max(reachability_dataset)
+global_reach_max = float(np.max(optics_reachability))
 if not np.isfinite(global_reach_max) or global_reach_max <= 0:
     global_reach_max = 1.0
+global_prompt_reach_max = scale_reachability_for_plot(global_reach_max)
 
-scaled_prompt_reachability = []
-for token_vals in all_prompt_reachability:
-    scaled_prompt_reachability.append([scale_reachability_for_plot(v) for v in token_vals])
+# Global scatter axis limits — fixed across tokens for smooth animation
+pad = 0.5
+global_x_min = flat_projections[:, :, 0].min() - pad
+global_x_max = flat_projections[:, :, 0].max() + pad
+global_y_min = flat_projections[:, :, 1].min() - pad
+global_y_max = flat_projections[:, :, 1].max() + pad
 
-global_prompt_reach_max = scale_reachability_for_plot(MAX_EPS + 1)
-
-prompt_counts = [(prompt_ids == p).sum() for p in range(n_prompts)]
+cmap = plt.cm.get_cmap("tab10", n_prompts)
+prompt_colors = [cmap(p / max(n_prompts - 1, 1)) for p in range(n_prompts)]
 
 fig = plt.figure(figsize=(15, 10))
 gs = fig.add_gridspec(3, 2, height_ratios=[2.4, 2.2, 1.5])
@@ -219,11 +96,11 @@ for p in range(n_prompts):
 
 # Left: UMAP colored by prompt labels
 sc = ax_scatter.scatter(
-    initial_proj[:, 0], initial_proj[:, 1],
-    c=prompt_ids, cmap=cmap, vmin=0, vmax=n_prompts - 1, s=12
+    flat_projections[0, :, 0], flat_projections[0, :, 1],
+    c=flat_prompt_ids, cmap=cmap, vmin=0, vmax=n_prompts - 1, s=12
 )
-cluster_count = all_cluster_counts[0]
-noise_count = all_noise_label_counts[0]
+cluster_count = int(metrics_cluster_counts[0].sum())
+noise_count = int(metrics_noise_counts[0].sum())
 ax_scatter.set_title(
     f"UMAP by prompt at token position 1 (OPTICS clusters={cluster_count}, noise={noise_count})",
     pad=26,
@@ -248,12 +125,12 @@ ax_scatter.legend(
 
 # Metrics tables (top-right) - one per prompt.
 def make_prompt_table_rows(t, p):
-    pc = all_prompt_core_counts[t][p]
-    pb = all_prompt_border_counts[t][p]
-    pn = all_prompt_noise_counts[t][p]
+    pc = int(metrics_core_counts[t, p])
+    pb = int(metrics_border_counts[t, p])
+    pn = int(metrics_noise_counts[t, p])
     total = max(pc + pb + pn, 1)
-    hom = all_prompt_homogeneity[t][p]
-    cluster_count = all_prompt_cluster_counts[t][p]
+    hom = float(metrics_core_homogeneity[t, p])
+    cluster_count = int(metrics_cluster_counts[t, p])
     return [
         ["Clusters", str(cluster_count), "-"],
         ["Core", str(pc), f"{pc/total:.2f}"],
@@ -279,7 +156,7 @@ for p in range(n_prompts):
 # Prompt-specific reachability bars.
 reach_bars_by_prompt = []
 for p, ax in enumerate(reach_axes):
-    vals = scaled_prompt_reachability[0][p]
+    vals = scaled_reachability[0, p]   # [num_return_per_prompt]
     x = np.arange(len(vals))
     bars = ax.bar(
         x,
@@ -322,18 +199,13 @@ slider = Slider(ax_slider, "Token", 1, num_tokens, valinit=1, valstep=1)
 
 def update(_val):
     t = int(slider.val) - 1
-    proj = projections[t]
-    labels = all_labels[t]
-    ordered_colors = all_ordered_colors[t]
 
-    # Update scatter positions
-    sc.set_offsets(proj)
-
-    # Keep scatter limits fixed so movement reflects data, not axis rescaling.
-    ax_scatter.set_xlim(global_x_min - pad, global_x_max + pad)
-    ax_scatter.set_ylim(global_y_min - pad, global_y_max + pad)
-    cluster_count = all_cluster_counts[t]
-    noise_count = all_noise_label_counts[t]
+    # Update scatter: flat_projections[t] is [num_sentences, 2]
+    sc.set_offsets(flat_projections[t])
+    ax_scatter.set_xlim(global_x_min, global_x_max)
+    ax_scatter.set_ylim(global_y_min, global_y_max)
+    cluster_count = int(metrics_cluster_counts[t].sum())
+    noise_count = int(metrics_noise_counts[t].sum())
     ax_scatter.set_title(
         f"UMAP by prompt at token position {t + 1} (OPTICS clusters={cluster_count}, noise={noise_count})",
         pad=26,
@@ -355,9 +227,9 @@ def update(_val):
         tbl.scale(1.0, 1.2)
         table_holders[p] = tbl
 
-    # Update one reachability plot per prompt.
+    # Update reachability bars: scaled_reachability[t, p] is [num_return_per_prompt]
     for p, bars in enumerate(reach_bars_by_prompt):
-        vals = scaled_prompt_reachability[t][p]
+        vals = scaled_reachability[t, p]
         for idx, bar in enumerate(bars):
             bar.set_height(vals[idx])
             bar.set_color(prompt_colors[p])

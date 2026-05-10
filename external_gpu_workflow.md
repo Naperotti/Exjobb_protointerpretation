@@ -84,6 +84,8 @@ git push
 
 ### 4.3 Run on remote (background)
 
+### Pull first
+ssh tony@100.121.67.110 "cd ~/Exjobb_protointerpretation && git fetch origin && git switch iterative-embeddings && git reset --hard origin/iterative-embeddings"
 ```bash
 ssh tony@100.121.67.110 "cd ~/Exjobb_protointerpretation && source ~/venv/bin/activate && nohup python -u run_chunked_pipeline.py > chunked_run.log 2>&1 &"
 ```
