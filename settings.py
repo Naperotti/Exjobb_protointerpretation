@@ -1,4 +1,4 @@
-SETTINGS_NAME = "all_prompts_32_tokens"
+SETTINGS_NAME = "Bank_prompts_40tokens_3000returns"
 PROMPT_ID = "test_1"
 
 MODEL_NAME = "Qwen/Qwen3-8B"
@@ -15,5 +15,5 @@ EMBEDDING_MODE = "hidden"  # "hidden" or "sentence"
 EMBEDDING_MODEL_NAME = None
 EMBEDDING_LAYER = -1
 EMBEDDING_OUTPUT_DIR = "embeddings"
-EMBEDDING_ARRAY_FILENAME = "aligned_va_embeddings.npy"
-EMBEDDING_METADATA_FILENAME = "aligned_va_metadata.json"
+EMBEDDING_ARRAY_FILENAME = f"aligned_va_embeddings_{SETTINGS_NAME}.npy"
+EMBEDDING_METADATA_FILENAME = f"aligned_va_metadata_{SETTINGS_NAME}.json"

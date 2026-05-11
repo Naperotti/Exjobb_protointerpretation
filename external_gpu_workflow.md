@@ -107,6 +107,29 @@ When complete, final merged files appear in:
 
 Chunk files (`part1`, `part2`, etc.) are kept for debugging.
 
+### 4.6 Run precompute_umap.py (on remote, after embeddings are done)
+
+Once embeddings merge completes, precompute UMAP + OPTICS on the remote GPU:
+
+```bash
+ssh tony@100.121.67.110 "cd ~/Exjobb_protointerpretation && source ~/venv/bin/activate && nohup python -u precompute_umap.py > precompute_run.log 2>&1 &"
+```
+
+Watch progress:
+
+```bash
+ssh tony@100.121.67.110 "cd ~/Exjobb_protointerpretation && tail -f precompute_run.log"
+```
+
+This generates 5 output files in `embeddings/` directory:
+- `umap_projections.npy` `[num_tokens, n_prompts, num_return, 2]`
+- `optics_labels.npy`
+- `optics_reachability.npy`
+- `optics_orderings.npy`
+- `optics_metrics.npz`
+
+These are loaded by `visualize_umap_optics_local.py` for instant slider rendering.
+
 ---
 
 ## 5) Check job status
@@ -200,28 +223,28 @@ ssh tony@100.121.67.110 "df -h ~"
 
 ---
 
-## 8) Download results to local machine
+## 8) Download results to local machine (from git bash or terminal)
 
-From your **local machine**, copy merged outputs:
+From your **local machine** (git bash or terminal), copy merged outputs:
 
-### Download merged sequences
+### Download merged sequences (git bash)
 
-```powershell
-scp tony@100.121.67.110:~/Exjobb_protointerpretation/data/Bank_prompts_40tokens_3000returns.npz "C:\Users\naper\OneDrive\Dokument\GitHub\Exjobb_protointerpretation\data\"
+```bash
+scp tony@100.121.67.110:~/Exjobb_protointerpretation/data/Bank_prompts_40tokens_3000returns.npz /c/Users/naper/OneDrive/Dokument/GitHub/Exjobb_protointerpretation/data/
 ```
 
 (Replace filename with your `BASE_SETTINGS_NAME`)
 
-### Download merged embeddings
+### Download merged embeddings (git bash)
 
-```powershell
-scp tony@100.121.67.110:~/Exjobb_protointerpretation/embeddings/aligned_va_embeddings_Bank_prompts_40tokens_3000returns.npy "C:\Users\naper\OneDrive\Dokument\GitHub\Exjobb_protointerpretation\embeddings\"
-scp tony@100.121.67.110:~/Exjobb_protointerpretation/embeddings/aligned_va_metadata_Bank_prompts_40tokens_3000returns.json "C:\Users\naper\OneDrive\Dokument\GitHub\Exjobb_protointerpretation\embeddings\"
+```bash
+scp tony@100.121.67.110:~/Exjobb_protointerpretation/embeddings/aligned_va_embeddings_Bank_prompts_40tokens_3000returns.npy /c/Users/naper/OneDrive/Dokument/GitHub/Exjobb_protointerpretation/embeddings/
+scp tony@100.121.67.110:~/Exjobb_protointerpretation/embeddings/aligned_va_metadata_Bank_prompts_40tokens_3000returns.json /c/Users/naper/OneDrive/Dokument/GitHub/Exjobb_protointerpretation/embeddings/
 ```
 
-### Visualize locally
+### Visualize locally (after files are downloaded)
 
-```powershell
+```bash
 python visualize_umap_optics_local.py
 python visualize_entropy.py
 ```
@@ -253,7 +276,9 @@ This ensures remote always matches remote branch exactly, avoiding conflicts.
 | Task | Command |
 |------|---------|
 | Start chunked run | `ssh tony@100.121.67.110 "cd ~/Exjobb_protointerpretation && source ~/venv/bin/activate && nohup python -u run_chunked_pipeline.py > chunked_run.log 2>&1 &"` |
-| Watch log | `ssh tony@100.121.67.110 "tail -f ~/Exjobb_protointerpretation/chunked_run.log"` |
+| Watch chunked log | `ssh tony@100.121.67.110 "tail -f ~/Exjobb_protointerpretation/chunked_run.log"` |
+| Run precompute | `ssh tony@100.121.67.110 "cd ~/Exjobb_protointerpretation && source ~/venv/bin/activate && nohup python -u precompute_umap.py > precompute_run.log 2>&1 &"` |
+| Watch precompute log | `ssh tony@100.121.67.110 "tail -f ~/Exjobb_protointerpretation/precompute_run.log"` |
 | Check GPU | `ssh tony@100.121.67.110 "nvidia-smi"` |
 | List running jobs | `ssh tony@100.121.67.110 "ps aux \| grep python"` |
 | Stop job | `ssh tony@100.121.67.110 "pkill -f run_chunked_pipeline.py"` |

@@ -9,9 +9,9 @@ import numpy as np
 
 
 # Chunked run configuration
-TOTAL_RETURNS = 3000
-CHUNK_RETURNS = 500
-BASE_SETTINGS_NAME = "Bank_prompts_40tokens_3000returns"
+TOTAL_RETURNS = 500
+CHUNK_RETURNS = 100
+BASE_SETTINGS_NAME = "Bank_prompts_200tokens_500returns"
 
 
 ROOT = Path(__file__).resolve().parent
