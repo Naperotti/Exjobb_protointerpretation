@@ -4,25 +4,34 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 from matplotlib.lines import Line2D
 from pathlib import Path
-from settings import EMBEDDING_OUTPUT_DIR, GENERATED_OUTPUT_PATH, EMBEDDING_METADATA_FILENAME
+from settings import (
+    EMBEDDING_OUTPUT_DIR,
+    GENERATED_OUTPUT_PATH,
+    EMBEDDING_METADATA_FILENAME,
+    UMAP_PROJECTIONS_FILENAME,
+    OPTICS_LABELS_FILENAME,
+    OPTICS_REACHABILITY_FILENAME,
+    OPTICS_ORDERINGS_FILENAME,
+    OPTICS_METRICS_FILENAME,
+)
 
 output_dir = Path(EMBEDDING_OUTPUT_DIR)
 
 # --- Load all precomputed data from precompute_umap.py ---
 
 # projections: [num_tokens, n_prompts, num_return_per_prompt, 2], float32
-projections = np.load(output_dir / "umap_projections.npy")
+projections = np.load(output_dir / UMAP_PROJECTIONS_FILENAME)
 num_tokens, n_prompts, num_return_per_prompt, _ = projections.shape
 
 # optics_labels:       [num_tokens, n_prompts, num_return_per_prompt], int32
 # optics_reachability: [num_tokens, n_prompts, num_return_per_prompt], float32 (ordered, inf->1.0)
 # optics_orderings:    [num_tokens, n_prompts, num_return_per_prompt], int64
-optics_labels       = np.load(output_dir / "optics_labels.npy")
-optics_reachability = np.load(output_dir / "optics_reachability.npy")
-optics_orderings    = np.load(output_dir / "optics_orderings.npy")
+optics_labels       = np.load(output_dir / OPTICS_LABELS_FILENAME)
+optics_reachability = np.load(output_dir / OPTICS_REACHABILITY_FILENAME)
+optics_orderings    = np.load(output_dir / OPTICS_ORDERINGS_FILENAME)
 
 # optics_metrics keys — each shape [num_tokens, n_prompts]
-optics_metrics = np.load(output_dir / "optics_metrics.npz")
+optics_metrics = np.load(output_dir / OPTICS_METRICS_FILENAME)
 metrics_cluster_counts   = optics_metrics["cluster_counts"]    # int32
 metrics_noise_counts     = optics_metrics["noise_counts"]      # int32
 metrics_core_counts      = optics_metrics["core_counts"]       # int32

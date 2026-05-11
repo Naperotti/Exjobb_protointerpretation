@@ -3,7 +3,16 @@ import numpy as np
 import umap
 from sklearn.cluster import OPTICS
 from pathlib import Path
-from settings import EMBEDDING_OUTPUT_DIR, EMBEDDING_ARRAY_FILENAME, EMBEDDING_METADATA_FILENAME
+from settings import (
+    EMBEDDING_OUTPUT_DIR,
+    EMBEDDING_ARRAY_FILENAME,
+    EMBEDDING_METADATA_FILENAME,
+    UMAP_PROJECTIONS_FILENAME,
+    OPTICS_LABELS_FILENAME,
+    OPTICS_REACHABILITY_FILENAME,
+    OPTICS_ORDERINGS_FILENAME,
+    OPTICS_METRICS_FILENAME,
+)
 
 # OPTICS clustering settings
 MIN_SAMPLES = 10
@@ -110,12 +119,12 @@ for t in range(num_tokens):
     print(f"  Token {t + 1}/{num_tokens} done")
 
 # Save all outputs
-np.save(output_dir / "umap_projections.npy", projections)
-np.save(output_dir / "optics_labels.npy", optics_labels)
-np.save(output_dir / "optics_reachability.npy", optics_reachability)
-np.save(output_dir / "optics_orderings.npy", optics_orderings)
+np.save(output_dir / UMAP_PROJECTIONS_FILENAME, projections)
+np.save(output_dir / OPTICS_LABELS_FILENAME, optics_labels)
+np.save(output_dir / OPTICS_REACHABILITY_FILENAME, optics_reachability)
+np.save(output_dir / OPTICS_ORDERINGS_FILENAME, optics_orderings)
 np.savez_compressed(
-    output_dir / "optics_metrics.npz",
+    output_dir / OPTICS_METRICS_FILENAME,
     cluster_counts=metrics_cluster_counts,
     noise_counts=metrics_noise_counts,
     core_counts=metrics_core_counts,
