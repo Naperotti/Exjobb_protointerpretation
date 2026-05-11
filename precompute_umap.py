@@ -15,8 +15,8 @@ from settings import (
 )
 
 # OPTICS clustering settings
-MIN_SAMPLES = 10
-MAX_EPS = 1
+MIN_SAMPLES = 20
+MAX_EPS = 800
 XI = 0.5
 METRIC = "euclidean"
 
