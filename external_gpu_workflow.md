@@ -284,3 +284,22 @@ This ensures remote always matches remote branch exactly, avoiding conflicts.
 | Stop job | `ssh tony@100.121.67.110 "pkill -f run_chunked_pipeline.py"` |
 | List data | `ssh tony@100.121.67.110 "ls -lh ~/Exjobb_protointerpretation/data/"` |
 | Sync remote | `ssh tony@100.121.67.110 "cd ~/Exjobb_protointerpretation && git fetch origin && git switch iterative-embeddings && git reset --hard origin/iterative-embeddings"` |
+
+
+
+
+### download
+
+RUN=Bank_prompts_40tokens_3000returns
+LOCAL=/c/Users/naper/OneDrive/Dokument/GitHub/Exjobb_protointerpretation
+
+
+scp tony@100.121.67.110:~/Exjobb_protointerpretation/embeddings/aligned_va_metadata_${RUN}.json ${LOCAL}/embeddings/
+scp tony@100.121.67.110:~/Exjobb_protointerpretation/embeddings/umap_projections_${RUN}*.npy ${LOCAL}/embeddings/
+scp tony@100.121.67.110:~/Exjobb_protointerpretation/embeddings/optics_labels_${RUN}*.npy ${LOCAL}/embeddings/
+scp tony@100.121.67.110:~/Exjobb_protointerpretation/embeddings/optics_reachability_${RUN}*.npy ${LOCAL}/embeddings/
+scp tony@100.121.67.110:~/Exjobb_protointerpretation/embeddings/optics_orderings_${RUN}*.npy ${LOCAL}/embeddings/
+scp tony@100.121.67.110:~/Exjobb_protointerpretation/embeddings/optics_metrics_${RUN}*.npz ${LOCAL}/embeddings/
+
+scp tony@100.121.67.110:~/Exjobb_protointerpretation/data/${RUN}.npz ${LOCAL}/data/
+scp tony@100.121.67.110:~/Exjobb_protointerpretation/embeddings/aligned_va_embeddings_${RUN}.npy ${LOCAL}/embeddings/
