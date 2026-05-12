@@ -17,6 +17,7 @@ EMBEDDING_LAYER = -1
 EMBEDDING_OUTPUT_DIR = "embeddings"
 EMBEDDING_ARRAY_FILENAME = f"aligned_va_embeddings_{SETTINGS_NAME}.npy"
 EMBEDDING_METADATA_FILENAME = f"aligned_va_metadata_{SETTINGS_NAME}.json"
+HOVER_TEXT_EXPORT_FILENAME = f"hover_text_export_{SETTINGS_NAME}.npz"
 
 # Precompute output files (run-specific)
 UMAP_PROJECTIONS_FILENAME = f"umap_projections_{SETTINGS_NAME}.npy"

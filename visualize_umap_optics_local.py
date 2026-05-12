@@ -8,6 +8,7 @@ from settings import (
     EMBEDDING_OUTPUT_DIR,
     GENERATED_OUTPUT_PATH,
     EMBEDDING_METADATA_FILENAME,
+    HOVER_TEXT_EXPORT_FILENAME,
     UMAP_PROJECTIONS_FILENAME,
     OPTICS_LABELS_FILENAME,
     OPTICS_REACHABILITY_FILENAME,
@@ -50,6 +51,27 @@ entropy_prompt_texts = [str(p) for p in entropy_data["prompt_texts"]]
 entropy_by_prompt = entropy_data["entropies"].mean(axis=1)   # [num_prompts, max_length]
 entropy_tokens = np.arange(1, entropy_by_prompt.shape[1] + 1)
 
+# Hover text export: full decoded sequence text + exact token end offsets.
+hover_data = np.load(output_dir / HOVER_TEXT_EXPORT_FILENAME, allow_pickle=False)
+hover_full_texts = hover_data["full_texts"]
+hover_char_end_offsets = hover_data["char_end_offsets"]
+hover_metadata = json.loads(str(hover_data["metadata_json"]))
+
+if int(hover_metadata.get("num_prompts", -1)) != n_prompts:
+    raise ValueError(f"Hover export prompt count mismatch: {hover_metadata.get('num_prompts')} != {n_prompts}")
+if int(hover_metadata.get("num_return", -1)) != num_return_per_prompt:
+    raise ValueError(
+        f"Hover export return count mismatch: {hover_metadata.get('num_return')} != {num_return_per_prompt}"
+    )
+if hover_full_texts.shape != (n_prompts, num_return_per_prompt):
+    raise ValueError(f"Hover text shape mismatch: {hover_full_texts.shape} != {(n_prompts, num_return_per_prompt)}")
+if hover_char_end_offsets.shape != (n_prompts, num_return_per_prompt, entropy_by_prompt.shape[1]):
+    raise ValueError(
+        f"Hover offset shape mismatch: {hover_char_end_offsets.shape} != {(n_prompts, num_return_per_prompt, entropy_by_prompt.shape[1])}"
+    )
+
+flat_sequence_ids = np.concatenate([np.arange(num_return_per_prompt) for _ in range(n_prompts)])
+
 # --- Derive display arrays at load time (pure numpy, no sklearn) ---
 
 # flat_projections[t]: [num_sentences, 2] — all prompts concatenated for single scatter
@@ -80,6 +102,8 @@ global_y_max = flat_projections[:, :, 1].max() + pad
 
 cmap = plt.cm.get_cmap("tab10", n_prompts)
 prompt_colors = [cmap(p / max(n_prompts - 1, 1)) for p in range(n_prompts)]
+
+current_token_index = 0
 
 fig = plt.figure(figsize=(15, 10))
 gs = fig.add_gridspec(3, 2, height_ratios=[2.4, 2.2, 1.5])
@@ -201,13 +225,61 @@ ax_entropy.set_ylabel("Entropy")
 ax_entropy.legend(loc="upper right", fontsize=8)
 current_token_line = ax_entropy.axvline(x=1, color="red", linestyle="--", linewidth=1.2)
 
+hover_annotation = ax_scatter.annotate(
+    "",
+    xy=(0, 0),
+    xytext=(12, 12),
+    textcoords="offset points",
+    bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="0.5", alpha=0.95),
+    arrowprops=dict(arrowstyle="->", color="0.4", lw=0.8),
+    fontsize=8,
+)
+hover_annotation.set_visible(False)
+
 # Slider for token position
 ax_slider = plt.axes([0.2, 0.04, 0.6, 0.03])
 slider = Slider(ax_slider, "Token", 1, num_tokens, valinit=1, valstep=1)
 
 
+def format_hover_text(prompt_index, sequence_index, token_index):
+    prefix_end = int(hover_char_end_offsets[prompt_index, sequence_index, token_index])
+    prefix_text = hover_full_texts[prompt_index, sequence_index][:prefix_end]
+    return (
+        f"Prompt: {unique_prompts[prompt_index]}\n"
+        f"Sequence: {sequence_index + 1}\n"
+        f"Token: {token_index + 1}\n\n"
+        f"{prefix_text}"
+    )
+
+
+def on_move(event):
+    if event.inaxes != ax_scatter:
+        if hover_annotation.get_visible():
+            hover_annotation.set_visible(False)
+            fig.canvas.draw_idle()
+        return
+
+    contains, info = sc.contains(event)
+    if not contains or not info.get("ind"):
+        if hover_annotation.get_visible():
+            hover_annotation.set_visible(False)
+            fig.canvas.draw_idle()
+        return
+
+    flat_index = int(info["ind"][0])
+    prompt_index = int(flat_prompt_ids[flat_index])
+    sequence_index = int(flat_sequence_ids[flat_index])
+
+    hover_annotation.xy = (event.xdata, event.ydata)
+    hover_annotation.set_text(format_hover_text(prompt_index, sequence_index, current_token_index))
+    hover_annotation.set_visible(True)
+    fig.canvas.draw_idle()
+
+
 def update(_val):
+    global current_token_index
     t = int(slider.val) - 1
+    current_token_index = t
 
     # Update scatter: flat_projections[t] is [num_sentences, 2]
     sc.set_offsets(flat_projections[t])
@@ -249,8 +321,12 @@ def update(_val):
     token_pos = min(t + 1, entropy_by_prompt.shape[1])
     current_token_line.set_xdata([token_pos, token_pos])
 
+    if hover_annotation.get_visible():
+        hover_annotation.set_visible(False)
+
     fig.canvas.draw_idle()
 
 
 slider.on_changed(update)
+fig.canvas.mpl_connect("motion_notify_event", on_move)
 plt.show()
