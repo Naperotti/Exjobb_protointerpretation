@@ -1,4 +1,4 @@
-SETTINGS_NAME = "Bank_prompts_40tokens_3000returns" #_MIN_SAMPLES20_MAX_EPS800
+SETTINGS_NAME = "Bank_prompts_200tokens_500returns" #_MIN_SAMPLES20_MAX_EPS800, 
 PROMPT_ID = "test_1"
 
 MODEL_NAME = "Qwen/Qwen3-8B"
