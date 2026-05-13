@@ -89,8 +89,8 @@ def format_hover_text(prompt_index, sequence_index, token_index):
     prefix_end = int(hover_char_end_offsets[prompt_index, sequence_index, token_index])
     prefix_text = hover_full_texts[prompt_index, sequence_index][:prefix_end]
     
-    # Wrap long sequences so they fit neatly inside the static text box
-    wrapped_prefix = "\n".join(textwrap.wrap(prefix_text, width=65))
+    # Wrap long sequences so they expand downwards in lines, not horizontally
+    wrapped_prefix = "\n".join(textwrap.wrap(prefix_text, width=60))
     
     return (
         f"Prompt: {unique_prompts[prompt_index]}\n"
@@ -181,14 +181,22 @@ for p in range(n_prompts):
 
 # --- NEW: Static Text Box for Hover Information ---
 ax_hover_text = fig.add_subplot(gs[3, 1])
-ax_hover_text.axis("off") # Hide gridlines and borders
+
+# Formatera själva ritytan att se ut som en ruta
+ax_hover_text.set_xticks([])
+ax_hover_text.set_yticks([])
+ax_hover_text.set_facecolor("#f8f9fa")
+for spine in ax_hover_text.spines.values():
+    spine.set_edgecolor("0.8")
+    spine.set_linewidth(1.0)
 
 DEFAULT_HOVER_TEXT = "Hover over a data point to view prompt details."
+
+# Textobjektet existerar inuti den fasta ytan, utan en dynamisk bbox
 hover_text_display = ax_hover_text.text(
     0.05, 0.95, DEFAULT_HOVER_TEXT,
     transform=ax_hover_text.transAxes,
-    fontsize=9, va="top", ha="left", wrap=True,
-    bbox=dict(boxstyle="round,pad=1.0", fc="#f8f9fa", ec="0.8", alpha=1.0)
+    fontsize=8, va="top", ha="left"
 )
 # --------------------------------------------------
 
